@@ -1,0 +1,130 @@
+/* IBM Plex Sans Arabic Font */
+@import '@fontsource/ibm-plex-sans-arabic/400.css';
+@import '@fontsource/ibm-plex-sans-arabic/500.css';
+@import '@fontsource/ibm-plex-sans-arabic/600.css';
+@import '@fontsource/ibm-plex-sans-arabic/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Tashawer Brand Colors */
+    --background: #F5F5F5;
+    --foreground: #555555;
+    --primary: #5DADE2;           /* Brand Blue */
+    --primary-foreground: #ffffff;
+    --secondary: #F4D03F;         /* Brand Yellow */
+    --secondary-foreground: #555555;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #E74C3C;            /* Brand Red */
+    --accent-foreground: #ffffff;
+    --destructive: #E74C3C;       /* Brand Red */
+    --destructive-foreground: #ffffff;
+    --border: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #5DADE2;              /* Brand Blue */
+    --radius: 0.5rem;
+    --card: #ffffff;
+    --card-foreground: #555555;
+
+    /* Brand Color Palette */
+    --brand-blue: #5DADE2;
+    --brand-yellow: #F4D03F;
+    --brand-red: #E74C3C;
+    --brand-gray: #555555;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] {
+  text-align: right;
+  font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+}
+
+/* Arabic Font */
+.font-arabic {
+  font-family: 'IBM Plex Sans Arabic', system-ui, sans-serif;
+}
+
+/* RTL-safe logical properties */
+[dir="rtl"] .sidebar {
+  right: 0;
+  left: auto;
+}
+
+[dir="rtl"] .ml-auto {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+[dir="rtl"] .mr-auto {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--muted-foreground);
+  border-radius: 4px;
+  opacity: 0.3;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  opacity: 0.5;
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}

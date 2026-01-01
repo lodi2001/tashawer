@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تأكيد البريد الإلكتروني - تشاور</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+        .button {
+            display: inline-block;
+            background-color: #2563eb;
+            color: #ffffff !important;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #1d4ed8;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+        .divider {
+            border-top: 1px solid #eee;
+            margin: 30px 0;
+        }
+        .english {
+            direction: ltr;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">تشاور</div>
+            <p>منصة الاستشارات الهندسية</p>
+        </div>
+
+        <h2>مرحباً،</h2>
+        <p>شكراً لتسجيلك في منصة تشاور.</p>
+        <p>يرجى تأكيد بريدك الإلكتروني بالنقر على الزر أدناه:</p>
+
+        <div style="text-align: center;">
+            <a href="{{ verification_url }}" class="button">تأكيد البريد الإلكتروني</a>
+        </div>
+
+        <p>هذا الرابط صالح لمدة {{ expiry_hours }} ساعة.</p>
+        <p>إذا لم تقم بإنشاء حساب، يرجى تجاهل هذا البريد.</p>
+
+        <div class="divider"></div>
+
+        <div class="english">
+            <h2>Hello,</h2>
+            <p>Thank you for registering on Tashawer platform.</p>
+            <p>Please verify your email by clicking the button above.</p>
+            <p>This link is valid for {{ expiry_hours }} hours.</p>
+            <p>If you didn't create an account, please ignore this email.</p>
+        </div>
+
+        <div class="footer">
+            <p>© 2024 تشاور - Tashawer. جميع الحقوق محفوظة.</p>
+            <p>هذه رسالة آلية، يرجى عدم الرد عليها.</p>
+        </div>
+    </div>
+</body>
+</html>

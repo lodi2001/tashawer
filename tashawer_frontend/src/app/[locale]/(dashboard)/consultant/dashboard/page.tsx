@@ -29,9 +29,9 @@ import {
 } from 'lucide-react';
 
 const availabilityOptions: { value: AvailabilityStatus; label: string; color: string }[] = [
-  { value: 'available', label: 'Available', color: 'bg-primary/10 text-primary border-primary/30' },
+  { value: 'available', label: 'Available', color: 'bg-brand-blue/10 text-brand-blue border-brand-blue/30' },
   { value: 'busy', label: 'Busy', color: 'bg-secondary/20 text-brand-gray border-secondary/50' },
-  { value: 'not_available', label: 'Not Available', color: 'bg-destructive/10 text-destructive border-destructive/30' },
+  { value: 'not_available', label: 'Not Available', color: 'bg-brand-red/10 text-brand-red border-brand-red/30' },
 ];
 
 export default function ConsultantDashboardPage() {
@@ -207,8 +207,8 @@ export default function ConsultantDashboardPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Mail className="h-5 w-5 text-blue-600" />
+                <div className="p-2 bg-brand-blue/10 rounded-lg">
+                  <Mail className="h-5 w-5 text-brand-blue" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
@@ -223,8 +223,8 @@ export default function ConsultantDashboardPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 rounded-lg">
-                  <Briefcase className="h-5 w-5 text-primary" />
+                <div className="p-2 bg-brand-blue/10 rounded-lg">
+                  <Briefcase className="h-5 w-5 text-brand-blue" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
@@ -239,8 +239,8 @@ export default function ConsultantDashboardPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <FolderOpen className="h-5 w-5 text-purple-600" />
+                <div className="p-2 bg-brand-yellow/20 rounded-lg">
+                  <FolderOpen className="h-5 w-5 text-brand-gray" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
@@ -255,8 +255,8 @@ export default function ConsultantDashboardPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Star className="h-5 w-5 text-orange-600" />
+                <div className="p-2 bg-brand-yellow/20 rounded-lg">
+                  <Star className="h-5 w-5 text-brand-yellow" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
@@ -271,8 +271,8 @@ export default function ConsultantDashboardPage() {
           <Card>
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <Award className="h-5 w-5 text-yellow-600" />
+                <div className="p-2 bg-brand-red/10 rounded-lg">
+                  <Award className="h-5 w-5 text-brand-red" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
@@ -291,7 +291,7 @@ export default function ConsultantDashboardPage() {
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Mail className="h-5 w-5 text-primary" />
+                  <Mail className="h-5 w-5 text-brand-blue" />
                   <span className="font-medium">View Invitations</span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -303,7 +303,7 @@ export default function ConsultantDashboardPage() {
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <FolderOpen className="h-5 w-5 text-primary" />
+                  <FolderOpen className="h-5 w-5 text-brand-blue" />
                   <span className="font-medium">Manage Portfolio</span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -315,7 +315,7 @@ export default function ConsultantDashboardPage() {
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Star className="h-5 w-5 text-primary" />
+                  <Star className="h-5 w-5 text-brand-blue" />
                   <span className="font-medium">Manage Skills</span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-gray-400" />
@@ -327,7 +327,7 @@ export default function ConsultantDashboardPage() {
             <Card className="hover:shadow-md transition-shadow cursor-pointer">
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Award className="h-5 w-5 text-primary" />
+                  <Award className="h-5 w-5 text-brand-blue" />
                   <span className="font-medium">Manage Certifications</span>
                 </div>
                 <ChevronRight className="h-5 w-5 text-gray-400" />

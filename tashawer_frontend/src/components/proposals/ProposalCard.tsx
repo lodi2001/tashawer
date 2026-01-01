@@ -22,7 +22,7 @@ export function ProposalCard({
 
   return (
     <Link href={`/proposals/${proposal.id}`}>
-      <Card className="hover:shadow-md transition-shadow cursor-pointer">
+      <Card className="hover:shadow-md hover:bg-brand-yellow/5 transition-all cursor-pointer">
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1 min-w-0">

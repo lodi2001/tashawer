@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
 import { Button } from '@/components/ui';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import { useAuthStore } from '@/store/authStore';
-import { Briefcase, Building2, User, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { HardHat, Building2, User, ArrowRight, ArrowLeft, CheckCircle2, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function HomePage() {
   const locale = useLocale();
@@ -13,11 +15,17 @@ export default function HomePage() {
   const tCommon = useTranslations('common');
   const tAuth = useTranslations('auth');
   const tNav = useTranslations('nav');
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, logout } = useAuthStore();
+  const router = useRouter();
   const isRTL = locale === 'ar';
 
   // Helper to prefix paths with locale
   const localePath = (path: string) => `/${locale}${path}`;
+
+  const handleLogout = async () => {
+    await logout();
+    router.push(localePath('/login'));
+  };
 
   const features = [
     {
@@ -31,7 +39,7 @@ export default function HomePage() {
       description: t('organizationsDesc'),
     },
     {
-      icon: <Briefcase className="h-6 w-6" />,
+      icon: <HardHat className="h-6 w-6" />,
       title: t('consultants'),
       description: t('consultantsDesc'),
     },
@@ -54,15 +62,28 @@ export default function HomePage() {
       <header className="border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`flex items-center justify-between h-16 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <Link href={localePath('/')} className="text-2xl font-bold text-primary">
-              {tCommon('appName')}
+            <Link href={localePath('/')} className="flex items-center">
+              <Image
+                src="/images/Tashawer_Logo_Final.png"
+                alt={tCommon('appName')}
+                width={140}
+                height={45}
+                className="h-10 w-auto"
+                priority
+              />
             </Link>
             <div className={`flex items-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
               <LanguageSwitcher />
               {isAuthenticated ? (
-                <Link href={localePath(user?.role === 'admin' ? '/admin/users' : '/profile')}>
-                  <Button>{tNav('dashboard')}</Button>
-                </Link>
+                <>
+                  <Link href={localePath(user?.role === 'admin' ? '/admin/users' : '/profile')}>
+                    <Button>{tNav('dashboard')}</Button>
+                  </Link>
+                  <Button variant="outline" onClick={handleLogout}>
+                    <LogOut className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                    {tAuth('logout')}
+                  </Button>
+                </>
               ) : (
                 <>
                   <Link href={localePath('/login')}>
@@ -86,9 +107,17 @@ export default function HomePage() {
             <br />
             <span className="text-primary">{t('heroTitleHighlight')}</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600 mb-4 max-w-2xl mx-auto">
             {t('heroSubtitle')}
           </p>
+          <div className="inline-flex items-center gap-2 bg-brand-yellow/20 border border-brand-yellow/40 text-brand-gray px-4 py-2 rounded-full mb-8">
+            <span className="text-brand-red">✨</span>
+            <span className="text-sm font-medium">
+              {locale === 'ar'
+                ? 'مدعوم بالذكاء الاصطناعي — نبسّط نطاق مشروعك تلقائياً'
+                : 'Powered by AI — We simplify your project scope automatically'}
+            </span>
+          </div>
           <div className={`flex flex-wrap justify-center gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <Link href={localePath('/register')}>
               <Button size="lg" className={`text-lg px-8 ${isRTL ? 'flex-row-reverse' : ''}`}>
@@ -115,15 +144,15 @@ export default function HomePage() {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className={`p-6 rounded-xl border bg-white hover:shadow-lg transition-shadow ${isRTL ? 'text-right' : ''}`}
+                className={`p-6 rounded-xl border border-brand-yellow/30 bg-brand-yellow/10 hover:shadow-lg hover:bg-brand-yellow/15 transition-all ${isRTL ? 'text-right' : ''}`}
               >
-                <div className={`flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary mb-4 ${isRTL ? 'ml-auto' : ''}`}>
+                <div className={`flex h-12 w-12 items-center justify-center rounded-lg bg-brand-red/10 text-brand-red mb-4 ${isRTL ? 'ml-auto' : ''}`}>
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-semibold text-brand-blue mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <p className="text-brand-gray">{feature.description}</p>
               </div>
             ))}
           </div>
@@ -150,11 +179,11 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            <div className={`bg-white p-8 rounded-2xl shadow-lg ${isRTL ? 'text-right' : ''}`}>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+            <div className={`p-8 rounded-2xl border border-brand-yellow/30 bg-brand-yellow/10 shadow-lg ${isRTL ? 'text-right' : ''}`}>
+              <h3 className="text-xl font-semibold text-brand-blue mb-4">
                 {t('readyToStart')}
               </h3>
-              <p className="text-gray-600 mb-6">
+              <p className="text-brand-gray mb-6">
                 {t('readyToStartDesc')}
               </p>
               <Link href={localePath('/register')}>
@@ -169,8 +198,14 @@ export default function HomePage() {
       <footer className="py-12 border-t">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className={`flex flex-col md:flex-row items-center justify-between gap-4 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              <span className="text-xl font-bold text-primary">{tCommon('appName')}</span>
+            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <Image
+                src="/images/Tashawer_Logo_Final.png"
+                alt={tCommon('appName')}
+                width={120}
+                height={40}
+                className="h-8 w-auto"
+              />
               <span className="text-gray-500">{locale === 'en' ? 'تشاور' : 'Tashawer'}</span>
             </div>
             <p className="text-gray-500 text-sm">

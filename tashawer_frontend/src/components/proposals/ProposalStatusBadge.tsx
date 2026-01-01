@@ -21,22 +21,22 @@ const statusConfig: Record<
   submitted: {
     label: 'Submitted',
     icon: Send,
-    className: 'bg-primary/10 text-primary',
+    className: 'bg-brand-blue/10 text-brand-blue',
   },
   under_review: {
     label: 'Under Review',
     icon: Eye,
-    className: 'bg-secondary/20 text-brand-gray',
+    className: 'bg-brand-yellow/20 text-brand-gray',
   },
   accepted: {
     label: 'Accepted',
     icon: CheckCircle,
-    className: 'bg-primary/10 text-primary',
+    className: 'bg-brand-blue/10 text-brand-blue',
   },
   rejected: {
     label: 'Rejected',
     icon: XCircle,
-    className: 'bg-destructive/10 text-destructive',
+    className: 'bg-brand-red/10 text-brand-red',
   },
   withdrawn: {
     label: 'Withdrawn',

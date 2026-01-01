@@ -21,22 +21,22 @@ const statusConfig: Record<
   open: {
     label: 'Open',
     icon: Circle,
-    className: 'bg-primary/10 text-primary',
+    className: 'bg-brand-blue/10 text-brand-blue',
   },
   in_progress: {
     label: 'In Progress',
     icon: Clock,
-    className: 'bg-secondary/20 text-brand-gray',
+    className: 'bg-brand-yellow/20 text-brand-gray',
   },
   completed: {
     label: 'Completed',
     icon: CheckCircle,
-    className: 'bg-primary/10 text-primary',
+    className: 'bg-brand-blue/10 text-brand-blue',
   },
   cancelled: {
     label: 'Cancelled',
     icon: XCircle,
-    className: 'bg-destructive/10 text-destructive',
+    className: 'bg-brand-red/10 text-brand-red',
   },
 };
 

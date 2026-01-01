@@ -115,7 +115,7 @@ export default function ProfilePage() {
 
     if (!user.is_verified) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-brand-yellow/20 text-brand-gray">
           <Clock className="h-3 w-3" />
           Pending Verification
         </span>
@@ -124,7 +124,7 @@ export default function ProfilePage() {
 
     if (!user.is_approved) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-brand-yellow/30 text-brand-gray">
           <Clock className="h-3 w-3" />
           Pending Approval
         </span>
@@ -133,7 +133,7 @@ export default function ProfilePage() {
 
     if (user.account_status === 'suspended') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-brand-red/10 text-brand-red">
           <XCircle className="h-3 w-3" />
           Suspended
         </span>
@@ -141,7 +141,7 @@ export default function ProfilePage() {
     }
 
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-brand-blue/10 text-brand-blue">
         <CheckCircle2 className="h-3 w-3" />
         Active
       </span>
@@ -181,7 +181,7 @@ export default function ProfilePage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue">
                   {getIcon()}
                 </div>
                 <div>
@@ -209,7 +209,7 @@ export default function ProfilePage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Account Info (readonly) */}
-              <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg mb-6">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-brand-yellow/10 rounded-lg border border-brand-yellow/30 mb-6">
                 <div>
                   <p className="text-xs text-gray-500">Email</p>
                   <p className="text-sm font-medium">{user?.email}</p>

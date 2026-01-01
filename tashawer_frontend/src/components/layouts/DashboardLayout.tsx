@@ -3,6 +3,7 @@
 import { ReactNode, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useLocale, useTranslations } from 'next-intl';
 import { useAuthStore } from '@/store/authStore';
 import { PageLoader, Button } from '@/components/ui';
@@ -133,8 +134,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           lg:translate-x-0`}
       >
         <div className="flex h-16 items-center justify-between px-4 border-b">
-          <Link href={localePath('/')} className="text-xl font-bold text-primary">
-            {tCommon('appName')}
+          <Link href={localePath('/')} className="flex items-center">
+            <Image
+              src="/images/Tashawer_Logo_Final.png"
+              alt={tCommon('appName')}
+              width={120}
+              height={40}
+              className="h-8 w-auto"
+            />
           </Link>
           <button
             className="lg:hidden"

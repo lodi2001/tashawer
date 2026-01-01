@@ -42,7 +42,7 @@ export function ReviewCard({
 
   return (
     <Card
-      className={linkToDetail ? 'cursor-pointer hover:shadow-md transition-shadow' : ''}
+      className={linkToDetail ? 'cursor-pointer hover:shadow-md hover:bg-brand-yellow/5 transition-all' : ''}
       onClick={handleCardClick}
     >
       <CardContent className="p-4">
@@ -88,7 +88,7 @@ export function ReviewCard({
 
         {/* Response */}
         {isReviewDetail(review) && review.response && (
-          <div className="mt-4 p-3 bg-gray-50 rounded-lg border-l-4 border-primary">
+          <div className="mt-4 p-3 bg-brand-yellow/10 rounded-lg border-l-4 border-brand-blue">
             <div className="flex items-center gap-2 mb-2">
               <MessageSquare className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-gray-700">

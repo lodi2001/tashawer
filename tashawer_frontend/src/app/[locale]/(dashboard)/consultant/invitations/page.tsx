@@ -31,9 +31,9 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 
 const statusColors = {
-  pending: 'bg-secondary/20 text-brand-gray',
-  accepted: 'bg-primary/10 text-primary',
-  declined: 'bg-destructive/10 text-destructive',
+  pending: 'bg-brand-yellow/20 text-brand-gray',
+  accepted: 'bg-brand-blue/10 text-brand-blue',
+  declined: 'bg-brand-red/10 text-brand-red',
   expired: 'bg-muted text-muted-foreground',
 };
 
@@ -180,7 +180,7 @@ export default function InvitationsPage() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <Mail className="h-5 w-5 text-primary" />
+                          <Mail className="h-5 w-5 text-brand-blue" />
                           <h3 className="font-semibold text-gray-900">
                             {invitation.project_title}
                           </h3>
@@ -191,7 +191,7 @@ export default function InvitationsPage() {
                         </p>
 
                         {invitation.message && (
-                          <div className="mt-3 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+                          <div className="mt-3 p-3 bg-brand-yellow/10 rounded-lg border border-brand-yellow/30 text-sm text-gray-600">
                             "{invitation.message}"
                           </div>
                         )}

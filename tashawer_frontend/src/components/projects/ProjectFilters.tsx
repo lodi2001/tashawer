@@ -101,7 +101,7 @@ export function ProjectFilters({
 
       {/* Advanced Filters */}
       {showAdvanced && (
-        <div className="p-4 bg-gray-50 rounded-lg space-y-4">
+        <div className="p-4 bg-brand-yellow/10 rounded-lg border border-brand-yellow/30 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">

@@ -24,7 +24,7 @@ const availabilityLabels = {
 export function ConsultantCard({ consultant }: ConsultantCardProps) {
   return (
     <Link href={`/consultants/${consultant.user_id}`}>
-      <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
+      <Card className="hover:shadow-md hover:bg-brand-yellow/5 transition-all cursor-pointer h-full">
         <CardContent className="p-4">
           <div className="flex items-start gap-4">
             {/* Avatar */}

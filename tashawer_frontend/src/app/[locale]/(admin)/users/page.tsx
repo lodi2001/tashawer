@@ -140,7 +140,7 @@ export default function AdminUsersPage() {
   const getStatusBadge = (user: AdminUserListItem) => {
     if (user.account_status === 'suspended') {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-red/10 text-brand-red">
           <XCircle className="h-3 w-3" />
           Suspended
         </span>
@@ -149,7 +149,7 @@ export default function AdminUsersPage() {
 
     if (!user.is_verified) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-yellow/20 text-brand-gray">
           <Clock className="h-3 w-3" />
           Unverified
         </span>
@@ -158,7 +158,7 @@ export default function AdminUsersPage() {
 
     if (!user.is_approved) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-yellow/30 text-brand-gray">
           <Clock className="h-3 w-3" />
           Pending Approval
         </span>
@@ -166,7 +166,7 @@ export default function AdminUsersPage() {
     }
 
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-blue/10 text-brand-blue">
         <CheckCircle2 className="h-3 w-3" />
         Active
       </span>
@@ -246,7 +246,7 @@ export default function AdminUsersPage() {
                     </thead>
                     <tbody>
                       {users.results.map((user) => (
-                        <tr key={user.id} className="border-b hover:bg-gray-50">
+                        <tr key={user.id} className="border-b hover:bg-brand-yellow/5">
                           <td className="py-3 px-4">
                             <div>
                               <p className="font-medium text-gray-900">{user.full_name}</p>

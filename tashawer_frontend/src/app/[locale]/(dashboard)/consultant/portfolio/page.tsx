@@ -255,7 +255,7 @@ export default function PortfolioManagementPage() {
                     className="w-full h-48 object-cover"
                   />
                 ) : (
-                  <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+                  <div className="w-full h-48 bg-brand-yellow/10 flex items-center justify-center">
                     <ImageIcon className="h-12 w-12 text-gray-400" />
                   </div>
                 )}
@@ -268,7 +268,7 @@ export default function PortfolioManagementPage() {
                           {item.title}
                         </h3>
                         {item.is_featured && (
-                          <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                          <Star className="h-4 w-4 text-brand-yellow fill-brand-yellow" />
                         )}
                       </div>
                       {item.category_name && (

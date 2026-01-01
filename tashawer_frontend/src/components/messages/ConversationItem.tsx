@@ -16,13 +16,13 @@ export function ConversationItem({ conversation, isActive = false }: Conversatio
   return (
     <Link href={`/messages/${conversation.id}`}>
       <div
-        className={`p-4 border-b hover:bg-gray-50 cursor-pointer transition-colors ${
-          isActive ? 'bg-primary/5 border-l-2 border-l-primary' : ''
-        } ${hasUnread ? 'bg-blue-50/50' : ''}`}
+        className={`p-4 border-b hover:bg-brand-yellow/5 cursor-pointer transition-colors ${
+          isActive ? 'bg-brand-yellow/10 border-l-2 border-l-brand-blue' : ''
+        } ${hasUnread ? 'bg-brand-blue/5' : ''}`}
       >
         <div className="flex items-start gap-3">
           {/* Avatar */}
-          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold shrink-0">
+          <div className="h-10 w-10 rounded-full bg-brand-blue/10 flex items-center justify-center text-brand-blue font-semibold shrink-0">
             {otherParticipant?.full_name?.charAt(0) || 'U'}
           </div>
 
@@ -40,7 +40,7 @@ export function ConversationItem({ conversation, isActive = false }: Conversatio
             </div>
 
             {conversation.project_title && (
-              <p className="text-xs text-primary truncate mt-0.5">
+              <p className="text-xs text-brand-blue truncate mt-0.5">
                 {conversation.project_title}
               </p>
             )}
@@ -54,7 +54,7 @@ export function ConversationItem({ conversation, isActive = false }: Conversatio
 
           {/* Unread Badge */}
           {hasUnread && (
-            <span className="h-5 min-w-5 px-1.5 rounded-full bg-primary text-white text-xs flex items-center justify-center shrink-0">
+            <span className="h-5 min-w-5 px-1.5 rounded-full bg-brand-red text-white text-xs flex items-center justify-center shrink-0">
               {conversation.unread_count > 99 ? '99+' : conversation.unread_count}
             </span>
           )}

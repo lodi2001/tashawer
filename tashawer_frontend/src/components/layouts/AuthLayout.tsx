@@ -20,7 +20,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   const localePath = (path: string) => `/${locale}${path}`;
 
   return (
-    <div className={`min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gray-50 ${isRTL ? 'font-arabic' : ''}`}>
+    <div className={`min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-brand-yellow/5 ${isRTL ? 'font-arabic' : ''}`}>
       {/* Language Switcher */}
       <div className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'}`}>
         <LanguageSwitcher />
@@ -39,7 +39,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-brand-yellow/30">
           {children}
         </div>
       </div>

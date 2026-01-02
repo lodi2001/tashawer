@@ -12,7 +12,11 @@ import type {
   InvoiceListItem,
   InvoiceDetail,
   InvoiceListResponse,
+  PaymentInitializeRequest,
   PaymentInitializeResponse,
+  PaymentStatusResponse,
+  PaymentMethod,
+  MockPaymentAction,
 } from '@/types';
 
 // ============ Transactions ============
@@ -128,16 +132,55 @@ export const refundEscrow = async (id: string, reason?: string): Promise<EscrowD
 
 // Initialize payment for escrow
 export const initializePayment = async (
-  escrowId: string
+  escrowId: string,
+  paymentMethod: PaymentMethod = 'credit_card',
+  returnUrl?: string
 ): Promise<PaymentInitializeResponse> => {
+  const data: PaymentInitializeRequest = {
+    escrow_id: escrowId,
+    payment_method: paymentMethod,
+  };
+
+  if (returnUrl) {
+    data.return_url = returnUrl;
+  }
+
   const response = await api.post<ApiResponse<PaymentInitializeResponse>>(
     '/payments/initialize/',
-    { escrow_id: escrowId }
+    data
   );
   if (response.data.success && response.data.data) {
     return response.data.data;
   }
   throw new Error(response.data.error?.message || 'Failed to initialize payment');
+};
+
+// Check payment status
+export const getPaymentStatus = async (
+  referenceNumber: string
+): Promise<PaymentStatusResponse> => {
+  const response = await api.get<ApiResponse<PaymentStatusResponse>>(
+    `/payments/status/${referenceNumber}/`
+  );
+  if (response.data.success && response.data.data) {
+    return response.data.data;
+  }
+  throw new Error(response.data.error?.message || 'Failed to get payment status');
+};
+
+// Mock payment for testing (only works in test mode)
+export const mockPayment = async (
+  referenceNumber: string,
+  action: MockPaymentAction = 'complete'
+): Promise<{ transaction_reference: string; status: string }> => {
+  const response = await api.post<ApiResponse<{ transaction_reference: string; status: string }>>(
+    `/payments/mock-payment/${referenceNumber}/`,
+    { action }
+  );
+  if (response.data.success && response.data.data) {
+    return response.data.data;
+  }
+  throw new Error(response.data.error?.message || 'Failed to process mock payment');
 };
 
 // ============ Invoices ============

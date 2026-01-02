@@ -266,3 +266,17 @@ TASHAWER_SETTINGS = {
     # Platform fee percentage
     'PLATFORM_FEE_PERCENTAGE': 10,
 }
+
+
+# Tap Payment Gateway Settings
+# Documentation: https://developers.tap.company/reference
+TAP_ENVIRONMENT = config('TAP_ENVIRONMENT', default='test')  # 'test' or 'production'
+TAP_SECRET_KEY = config('TAP_SECRET_KEY', default='')  # sk_test_xxx or sk_live_xxx
+TAP_PUBLIC_KEY = config('TAP_PUBLIC_KEY', default='')  # pk_test_xxx or pk_live_xxx
+TAP_WEBHOOK_SECRET = config('TAP_WEBHOOK_SECRET', default='')  # For webhook signature verification
+TAP_MERCHANT_ID = config('TAP_MERCHANT_ID', default='')  # Optional merchant ID
+
+# Payment callback URLs
+PAYMENT_SUCCESS_URL = config('PAYMENT_SUCCESS_URL', default=f'{FRONTEND_URL}/payments/success')
+PAYMENT_FAILURE_URL = config('PAYMENT_FAILURE_URL', default=f'{FRONTEND_URL}/payments/failure')
+PAYMENT_WEBHOOK_URL = config('PAYMENT_WEBHOOK_URL', default='')  # Your webhook URL

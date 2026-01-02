@@ -136,8 +136,34 @@ export interface EscrowCreateData {
   proposal_id: string;
 }
 
+// Payment initialize request
+export interface PaymentInitializeRequest {
+  escrow_id: string;
+  payment_method: PaymentMethod;
+  return_url?: string;
+}
+
 // Payment initialize response
 export interface PaymentInitializeResponse {
+  transaction_reference: string;
+  escrow_reference: string;
+  amount: string;
+  currency: string;
   payment_url: string;
-  reference_number: string;
+  charge_id?: string;
+  status: string;
+  test_mode?: boolean;
 }
+
+// Payment status response
+export interface PaymentStatusResponse {
+  reference_number: string;
+  status: TransactionStatus;
+  amount: string;
+  currency: string;
+  completed_at: string | null;
+  escrow_status: EscrowStatus | null;
+}
+
+// Mock payment action
+export type MockPaymentAction = 'complete' | 'fail' | 'cancel';

@@ -3,6 +3,8 @@ from .views import (
     # Payment
     PaymentInitializeView,
     PaymentWebhookView,
+    PaymentStatusView,
+    PaymentCallbackView,
     MockPaymentView,
     # Escrow
     EscrowListView,
@@ -26,6 +28,8 @@ urlpatterns = [
     # Payment gateway
     path('initialize/', PaymentInitializeView.as_view(), name='payment-initialize'),
     path('webhook/', PaymentWebhookView.as_view(), name='payment-webhook'),
+    path('callback/', PaymentCallbackView.as_view(), name='payment-callback'),
+    path('status/<str:reference_number>/', PaymentStatusView.as_view(), name='payment-status'),
     path('mock-payment/<str:reference_number>/', MockPaymentView.as_view(), name='mock-payment'),
 
     # Escrow

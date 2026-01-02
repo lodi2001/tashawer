@@ -74,8 +74,16 @@ export default function EscrowDetailPage() {
   const handlePay = async () => {
     try {
       setActionLoading('pay');
-      const { payment_url } = await initializePayment(escrowId);
-      window.location.href = payment_url;
+      setError(null);
+      const response = await initializePayment(escrowId, 'credit_card');
+
+      if (response.payment_url) {
+        // Redirect to payment gateway
+        window.location.href = response.payment_url;
+      } else {
+        setError('Failed to get payment URL');
+        setActionLoading(null);
+      }
     } catch (err) {
       setError(handleApiError(err));
       setActionLoading(null);

@@ -12,9 +12,9 @@ import type {
 
 // Get unread message count
 export const getUnreadCount = async (): Promise<number> => {
-  const response = await api.get<ApiResponse<UnreadCountResponse>>('/messages/unread-count/');
+  const response = await api.get<ApiResponse<{ total_unread: number; conversations: Array<{ conversation_id: string; unread_count: number }> }>>('/messages/unread-count/');
   if (response.data.success && response.data.data) {
-    return response.data.data.unread_count;
+    return response.data.data.total_unread;
   }
   return 0;
 };

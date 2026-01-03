@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useLocale } from 'next-intl';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, Spinner, Alert, AlertDescription } from '@/components/ui';
 import { ConversationItem } from '@/components/messages';
@@ -10,6 +11,9 @@ import type { ConversationListItem } from '@/types';
 import { MessageSquare } from 'lucide-react';
 
 export default function MessagesPage() {
+  const locale = useLocale();
+  const isRTL = locale === 'ar';
+
   const [conversations, setConversations] = useState<ConversationListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,9 +49,11 @@ export default function MessagesPage() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {isRTL ? 'الرسائل' : 'Messages'}
+          </h1>
           <p className="text-gray-600 mt-1">
-            Your conversations with clients and consultants
+            {isRTL ? 'محادثاتك مع العملاء والمستشارين' : 'Your conversations with clients and consultants'}
           </p>
         </div>
 
@@ -71,10 +77,10 @@ export default function MessagesPage() {
               <div className="text-center">
                 <MessageSquare className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-4 text-lg font-medium text-gray-900">
-                  No conversations yet
+                  {isRTL ? 'لا توجد محادثات بعد' : 'No conversations yet'}
                 </h3>
                 <p className="mt-2 text-gray-500">
-                  Start a conversation from a project or proposal page.
+                  {isRTL ? 'ابدأ محادثة من صفحة مشروع أو عرض.' : 'Start a conversation from a project or proposal page.'}
                 </p>
               </div>
             </CardContent>

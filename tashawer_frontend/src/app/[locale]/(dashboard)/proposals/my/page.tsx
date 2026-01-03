@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import { Card, CardContent, Spinner, Alert, AlertDescription, Select } from '@/components/ui';
+import { Card, CardContent, Spinner, Alert, AlertDescription, SimpleSelect as Select } from '@/components/ui';
 import { ProposalCard } from '@/components/proposals';
 import { Pagination } from '@/components/projects';
 import { getMyProposals } from '@/lib/proposals';

@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
-import { Button, Input, Select, Alert, AlertDescription } from '@/components/ui';
+import { Button, Input, SimpleSelect as Select, Alert, AlertDescription } from '@/components/ui';
 import { registerOrganization } from '@/lib/auth';
 import { handleApiError } from '@/lib/api';
 

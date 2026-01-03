@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Input, Button, Select } from '@/components/ui';
+import { Input, Button, SimpleSelect as Select } from '@/components/ui';
 import type { Category, ProjectFilters as Filters, ProjectStatus } from '@/types';
 import { Search, X, Filter } from 'lucide-react';
 

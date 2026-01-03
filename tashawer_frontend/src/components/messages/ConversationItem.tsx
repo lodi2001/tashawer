@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useLocale } from 'next-intl';
 import type { ConversationListItem } from '@/types';
 import { formatDistanceToNow } from 'date-fns';
+import { ar } from 'date-fns/locale';
 
 interface ConversationItemProps {
   conversation: ConversationListItem;
@@ -10,11 +12,13 @@ interface ConversationItemProps {
 }
 
 export function ConversationItem({ conversation, isActive = false }: ConversationItemProps) {
+  const locale = useLocale();
+  const isRTL = locale === 'ar';
   const otherParticipant = conversation.other_participants[0];
   const hasUnread = conversation.unread_count > 0;
 
   return (
-    <Link href={`/messages/${conversation.id}`}>
+    <Link href={`/${locale}/messages/${conversation.id}`}>
       <div
         className={`p-4 border-b hover:bg-brand-yellow/5 cursor-pointer transition-colors ${
           isActive ? 'bg-brand-yellow/10 border-l-2 border-l-brand-blue' : ''
@@ -34,7 +38,10 @@ export function ConversationItem({ conversation, isActive = false }: Conversatio
               </h3>
               {conversation.last_message_at && (
                 <span className="text-xs text-gray-500 shrink-0">
-                  {formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: true })}
+                  {formatDistanceToNow(new Date(conversation.last_message_at), {
+                    addSuffix: true,
+                    locale: isRTL ? ar : undefined
+                  })}
                 </span>
               )}
             </div>

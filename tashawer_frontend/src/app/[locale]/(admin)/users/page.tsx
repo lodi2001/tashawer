@@ -9,7 +9,7 @@ import {
   CardContent,
   Button,
   Input,
-  Select,
+  SimpleSelect as Select,
   Alert,
   AlertDescription,
   Spinner,

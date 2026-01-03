@@ -1,6 +1,6 @@
 'use client';
 
-import { Select } from '@/components/ui';
+import { SimpleSelect as Select } from '@/components/ui';
 import type { Category } from '@/types';
 
 interface CategorySelectProps {

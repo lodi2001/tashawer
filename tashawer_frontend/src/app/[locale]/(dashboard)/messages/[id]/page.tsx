@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useLocale } from 'next-intl';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import {
   Card,
@@ -26,6 +27,8 @@ import { ArrowLeft, Send, FileText, Briefcase } from 'lucide-react';
 
 export default function ConversationPage() {
   const params = useParams();
+  const locale = useLocale();
+  const isRTL = locale === 'ar';
   const conversationId = params.id as string;
 
   const [conversation, setConversation] = useState<ConversationDetail | null>(null);
@@ -139,36 +142,36 @@ export default function ConversationPage() {
           {/* Header */}
           <CardHeader className="border-b shrink-0">
             <div className="flex items-center gap-4">
-              <Link href="/messages">
+              <Link href={`/${locale}/messages`}>
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               </Link>
 
               <div className="flex items-center gap-3 flex-1">
-                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold flex-shrink-0">
                   {otherParticipant?.full_name?.charAt(0) || 'U'}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="font-semibold truncate">
-                    {otherParticipant?.full_name || 'Unknown User'}
+                    {otherParticipant?.full_name || (isRTL ? 'مستخدم غير معروف' : 'Unknown User')}
                   </h2>
                   {conversation.project_info && (
                     <Link
-                      href={`/projects/${conversation.project_info.id}`}
+                      href={`/${locale}/projects/${conversation.project_info.id}`}
                       className="text-xs text-primary hover:underline flex items-center gap-1"
                     >
                       <FileText className="h-3 w-3" />
-                      {conversation.project_info.title}
+                      <span>{conversation.project_info.title}</span>
                     </Link>
                   )}
                   {conversation.proposal_info && (
                     <Link
-                      href={`/proposals/${conversation.proposal_info.id}`}
+                      href={`/${locale}/proposals/${conversation.proposal_info.id}`}
                       className="text-xs text-primary hover:underline flex items-center gap-1"
                     >
                       <Briefcase className="h-3 w-3" />
-                      {conversation.proposal_info.project_title}
+                      <span>{conversation.proposal_info.project_title}</span>
                     </Link>
                   )}
                 </div>
@@ -189,7 +192,7 @@ export default function ConversationPage() {
           <CardContent className="flex-1 overflow-y-auto p-4">
             {messages.length === 0 ? (
               <div className="h-full flex items-center justify-center text-gray-500">
-                <p>No messages yet. Start the conversation!</p>
+                <p>{isRTL ? 'لا توجد رسائل بعد. ابدأ المحادثة!' : 'No messages yet. Start the conversation!'}</p>
               </div>
             ) : (
               <div>
@@ -209,7 +212,7 @@ export default function ConversationPage() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Type a message..."
+                placeholder={isRTL ? 'اكتب رسالة...' : 'Type a message...'}
                 rows={1}
                 className="flex-1 resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
@@ -226,7 +229,7 @@ export default function ConversationPage() {
               </Button>
             </form>
             <p className="text-xs text-gray-400 mt-1">
-              Press Enter to send, Shift+Enter for new line
+              {isRTL ? 'اضغط Enter للإرسال، Shift+Enter لسطر جديد' : 'Press Enter to send, Shift+Enter for new line'}
             </p>
           </div>
         </Card>

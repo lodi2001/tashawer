@@ -217,7 +217,7 @@ export default function WithdrawalsPage() {
           </div>
           <Button
             onClick={() => setShowWithdrawalForm(true)}
-            disabled={verifiedAccounts.length === 0 || (wallet && parseFloat(wallet.balance) < 100)}
+            disabled={verifiedAccounts.length === 0 || (wallet ? parseFloat(wallet.balance) < 100 : true)}
           >
             <ArrowUpRight className="h-4 w-4 mr-2" />
             Withdraw Funds

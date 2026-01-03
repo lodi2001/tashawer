@@ -6,6 +6,8 @@ from apps.core.models import SoftDeleteModel
 class TransactionType(models.TextChoices):
     """Transaction type choices"""
     PAYMENT = 'payment', 'Payment'
+    DEPOSIT = 'deposit', 'Deposit'
+    WITHDRAWAL = 'withdrawal', 'Withdrawal'
     ESCROW_HOLD = 'escrow_hold', 'Escrow Hold'
     ESCROW_RELEASE = 'escrow_release', 'Escrow Release'
     REFUND = 'refund', 'Refund'

@@ -1,0 +1,38 @@
+{% extends "emails/base_notification.html" %}
+
+{% block extra_content %}
+{% if order %}
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin: 20px 0; background-color: #f8f9fa; border-radius: 8px;">
+    <tr>
+        <td style="padding: 20px;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                    <td style="padding: 8px 0; {% if is_rtl %}text-align: right;{% endif %}">
+                        <strong>{% if is_rtl %}رقم الطلب:{% else %}Order Number:{% endif %}</strong>
+                        <span style="color: #1e40af;">#{{ order.order_number }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; {% if is_rtl %}text-align: right;{% endif %}">
+                        <strong>{% if is_rtl %}المشروع:{% else %}Project:{% endif %}</strong>
+                        {{ order.project.title }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; {% if is_rtl %}text-align: right;{% endif %}">
+                        <strong>{% if is_rtl %}المبلغ:{% else %}Amount:{% endif %}</strong>
+                        SAR {{ order.total_amount }}
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; {% if is_rtl %}text-align: right;{% endif %}">
+                        <strong>{% if is_rtl %}العميل:{% else %}Client:{% endif %}</strong>
+                        {{ order.client.full_name }}
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+{% endif %}
+{% endblock %}

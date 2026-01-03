@@ -43,9 +43,12 @@ LOCAL_APPS = [
     'apps.accounts',
     'apps.projects',
     'apps.proposals',
+    'apps.orders',
     'apps.messages',
     'apps.payments',
     'apps.reviews',
+    'apps.disputes',
+    'apps.notifications',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -280,3 +283,10 @@ TAP_MERCHANT_ID = config('TAP_MERCHANT_ID', default='')  # Optional merchant ID
 PAYMENT_SUCCESS_URL = config('PAYMENT_SUCCESS_URL', default=f'{FRONTEND_URL}/payments/success')
 PAYMENT_FAILURE_URL = config('PAYMENT_FAILURE_URL', default=f'{FRONTEND_URL}/payments/failure')
 PAYMENT_WEBHOOK_URL = config('PAYMENT_WEBHOOK_URL', default='')  # Your webhook URL
+
+
+# Firebase Cloud Messaging (Push Notifications)
+FIREBASE_CREDENTIALS_PATH = config(
+    'FIREBASE_CREDENTIALS_PATH',
+    default=str(BASE_DIR / 'config' / 'tashawer-22207-firebase-adminsdk-fbsvc-c620fa97ef.json')
+)

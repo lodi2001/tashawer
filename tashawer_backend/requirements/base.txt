@@ -35,3 +35,6 @@ phonenumbers>=8.13,<9.0
 
 # HTTP Client (for payment gateways)
 requests>=2.31,<3.0
+
+# Firebase (Push Notifications)
+firebase-admin>=7.0,<8.0

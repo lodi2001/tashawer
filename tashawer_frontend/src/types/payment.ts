@@ -1,5 +1,5 @@
 // Transaction types
-export type TransactionType = 'payment' | 'escrow_hold' | 'escrow_release' | 'refund' | 'platform_fee';
+export type TransactionType = 'payment' | 'deposit' | 'withdrawal' | 'escrow_hold' | 'escrow_release' | 'refund' | 'platform_fee';
 export type TransactionStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'refunded';
 export type PaymentMethod = 'credit_card' | 'debit_card' | 'bank_transfer' | 'mada' | 'apple_pay' | 'stc_pay';
 
@@ -167,3 +167,153 @@ export interface PaymentStatusResponse {
 
 // Mock payment action
 export type MockPaymentAction = 'complete' | 'fail' | 'cancel';
+
+// Wallet types
+export type WalletStatus = 'active' | 'frozen' | 'suspended';
+export type DepositStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+
+// Wallet
+export interface Wallet {
+  id: string;
+  user_email: string;
+  user_name: string;
+  balance: string;
+  pending_balance: string;
+  available_balance: string;
+  currency: string;
+  status: WalletStatus;
+  is_active: boolean;
+  total_deposited: string;
+  total_withdrawn: string;
+  total_earned: string;
+  total_spent: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Wallet balance (lightweight)
+export interface WalletBalance {
+  balance: string;
+  pending_balance: string;
+  available_balance: string;
+  currency: string;
+  status: WalletStatus;
+}
+
+// Deposit list item
+export interface DepositListItem {
+  id: string;
+  reference_number: string;
+  amount: string;
+  currency: string;
+  status: DepositStatus;
+  payment_method: string | null;
+  created_at: string;
+  completed_at: string | null;
+}
+
+// Deposit detail
+export interface DepositDetail extends DepositListItem {
+  gateway_charge_id: string | null;
+  failure_reason: string | null;
+}
+
+// Deposit list response
+export interface DepositListResponse {
+  results: DepositListItem[];
+  count: number;
+}
+
+// Deposit initialize request
+export interface DepositInitializeRequest {
+  amount: number;
+  payment_method?: PaymentMethod;
+  return_url?: string;
+}
+
+// Deposit initialize response
+export interface DepositInitializeResponse {
+  deposit_reference: string;
+  amount: string;
+  currency: string;
+  payment_url: string;
+  charge_id?: string;
+  status: string;
+  test_mode?: boolean;
+}
+
+// Deposit status response
+export interface DepositStatusResponse {
+  reference_number: string;
+  status: DepositStatus;
+  amount: string;
+  currency: string;
+  completed_at: string | null;
+  wallet_balance: string | null;
+}
+
+// Withdrawal types
+export type WithdrawalStatus = 'pending' | 'approved' | 'processing' | 'completed' | 'rejected' | 'cancelled';
+
+// Bank Account
+export interface BankAccount {
+  id: string;
+  bank_name: string;
+  bank_name_ar: string | null;
+  account_holder_name: string;
+  iban: string;
+  masked_iban: string;
+  swift_code: string | null;
+  is_verified: boolean;
+  is_primary: boolean;
+  created_at: string;
+}
+
+// Bank Account Create
+export interface BankAccountCreateData {
+  bank_name: string;
+  bank_name_ar?: string;
+  account_holder_name: string;
+  iban: string;
+  swift_code?: string;
+  is_primary?: boolean;
+}
+
+// Withdrawal list item
+export interface WithdrawalListItem {
+  id: string;
+  reference_number: string;
+  amount: string;
+  fee: string;
+  net_amount: string;
+  currency: string;
+  status: WithdrawalStatus;
+  bank_account_display: string;
+  created_at: string;
+  completed_at: string | null;
+}
+
+// Withdrawal detail
+export interface WithdrawalDetail extends Omit<WithdrawalListItem, 'bank_account_display'> {
+  bank_account: BankAccount;
+  bank_reference: string | null;
+  reviewed_by_name: string | null;
+  reviewed_at: string | null;
+  rejection_reason: string | null;
+  approved_at: string | null;
+  processed_at: string | null;
+  user_note: string | null;
+}
+
+// Withdrawal list response
+export interface WithdrawalListResponse {
+  results: WithdrawalListItem[];
+  count: number;
+}
+
+// Withdrawal create request
+export interface WithdrawalCreateRequest {
+  amount: number;
+  bank_account_id: string;
+  note?: string;
+}

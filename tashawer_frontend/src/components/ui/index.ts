@@ -4,3 +4,4 @@ export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent }
 export { Input } from './Input';
 export { Select } from './Select';
 export { Spinner, PageLoader } from './Spinner';
+export { Textarea } from './Textarea';

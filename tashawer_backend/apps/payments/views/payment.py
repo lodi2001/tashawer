@@ -18,6 +18,10 @@ from apps.payments.models import (
     TransactionStatus,
     Escrow,
     EscrowStatus,
+    WebhookLog,
+    WebhookSource,
+    WebhookEventType,
+    WebhookStatus,
 )
 from apps.payments.serializers import PaymentInitializeSerializer
 from apps.payments.services import TapPaymentGateway
@@ -191,11 +195,25 @@ class PaymentWebhookView(APIView):
         """
         gateway = TapPaymentGateway()
 
+        # Get client IP
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        ip_address = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+
         # Verify webhook signature if configured
         signature = request.headers.get('Tap-Signature', '')
+        signature_valid = True
         if gateway.webhook_secret and signature:
             if not gateway.verify_webhook_signature(request.body, signature):
                 logger.warning("Invalid webhook signature")
+                # Log failed signature attempt
+                WebhookLog.log_webhook(
+                    source=WebhookSource.TAP,
+                    event_type=WebhookEventType.PAYMENT,
+                    payload=request.data,
+                    headers=dict(request.headers),
+                    ip_address=ip_address,
+                    signature_valid=False,
+                )
                 return Response({
                     'success': False,
                     'message': 'Invalid signature'
@@ -206,6 +224,15 @@ class PaymentWebhookView(APIView):
             webhook_data = gateway.parse_webhook_data(request.data)
         except Exception as e:
             logger.error(f"Failed to parse webhook data: {str(e)}")
+            # Log parsing failure
+            WebhookLog.log_webhook(
+                source=WebhookSource.TAP,
+                event_type=WebhookEventType.UNKNOWN,
+                payload=request.data,
+                headers=dict(request.headers),
+                ip_address=ip_address,
+                signature_valid=signature_valid,
+            ).mark_failed(f"Failed to parse: {str(e)}")
             return Response({
                 'success': False,
                 'message': 'Invalid webhook data'
@@ -214,6 +241,37 @@ class PaymentWebhookView(APIView):
         reference_id = webhook_data.reference_id
         charge_status = webhook_data.status
 
+        # Determine event type based on status
+        event_type = WebhookEventType.PAYMENT
+        if gateway.is_successful_status(charge_status):
+            event_type = WebhookEventType.CHARGE_CAPTURED
+        elif gateway.is_failed_status(charge_status):
+            event_type = WebhookEventType.CHARGE_FAILED
+        elif gateway.is_cancelled_status(charge_status):
+            event_type = WebhookEventType.CHARGE_CANCELLED
+
+        # Log the webhook
+        webhook_log = WebhookLog.log_webhook(
+            source=WebhookSource.TAP,
+            event_type=event_type,
+            payload=request.data,
+            headers=dict(request.headers),
+            reference_number=reference_id,
+            gateway_charge_id=webhook_data.charge_id,
+            gateway_status=charge_status,
+            ip_address=ip_address,
+            signature_valid=signature_valid,
+        )
+
+        # Check for duplicates
+        if webhook_log.is_duplicate:
+            logger.info(f"Duplicate webhook received for {reference_id}, attempt #{webhook_log.attempt_count}")
+            webhook_log.mark_ignored("Duplicate webhook - already processed")
+            return Response({
+                'success': True,
+                'message': 'Webhook already processed'
+            }, status=status.HTTP_200_OK)
+
         if not reference_id:
             # Try to get from charge ID
             charge_id = webhook_data.charge_id
@@ -221,11 +279,14 @@ class PaymentWebhookView(APIView):
                 try:
                     transaction = Transaction.objects.get(gateway_transaction_id=charge_id)
                     reference_id = transaction.reference_number
+                    webhook_log.reference_number = reference_id
+                    webhook_log.save(update_fields=['reference_number'])
                 except Transaction.DoesNotExist:
                     pass
 
         if not reference_id:
             logger.warning(f"Webhook received without reference_id: {request.data}")
+            webhook_log.mark_failed("Transaction reference not found")
             return Response({
                 'success': False,
                 'message': 'Transaction reference not found'
@@ -235,45 +296,69 @@ class PaymentWebhookView(APIView):
             transaction = Transaction.objects.get(reference_number=reference_id)
         except Transaction.DoesNotExist:
             logger.warning(f"Transaction not found: {reference_id}")
+            webhook_log.mark_failed(f"Transaction not found: {reference_id}")
             return Response({
                 'success': False,
                 'message': 'Transaction not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
+        # Check idempotency - if transaction already processed, skip
+        if transaction.status == TransactionStatus.COMPLETED and gateway.is_successful_status(charge_status):
+            logger.info(f"Transaction {reference_id} already completed, ignoring webhook")
+            webhook_log.mark_ignored("Transaction already completed")
+            return Response({
+                'success': True,
+                'message': 'Transaction already processed'
+            }, status=status.HTTP_200_OK)
+
         # Update transaction based on Tap status
-        if gateway.is_successful_status(charge_status):
-            transaction.status = TransactionStatus.COMPLETED
-            transaction.gateway_transaction_id = webhook_data.charge_id
-            transaction.gateway_response = webhook_data.raw_data
-            transaction.completed_at = timezone.now()
-            transaction.save()
+        try:
+            if gateway.is_successful_status(charge_status):
+                transaction.status = TransactionStatus.COMPLETED
+                transaction.gateway_transaction_id = webhook_data.charge_id
+                transaction.gateway_response = webhook_data.raw_data
+                transaction.completed_at = timezone.now()
+                transaction.save()
 
-            # Update escrow status
-            if transaction.escrow:
-                transaction.escrow.fund()
-                transaction.escrow.hold()
+                # Update escrow status
+                if transaction.escrow:
+                    transaction.escrow.fund()
+                    transaction.escrow.hold()
 
-            logger.info(f"Payment completed: {transaction.reference_number} (Tap: {webhook_data.charge_id})")
+                logger.info(f"Payment completed: {transaction.reference_number} (Tap: {webhook_data.charge_id})")
 
-        elif gateway.is_failed_status(charge_status):
-            transaction.status = TransactionStatus.FAILED
-            transaction.gateway_response = webhook_data.raw_data
-            transaction.save()
+            elif gateway.is_failed_status(charge_status):
+                transaction.status = TransactionStatus.FAILED
+                transaction.gateway_response = webhook_data.raw_data
+                transaction.save()
 
-            logger.warning(f"Payment failed: {transaction.reference_number} - Status: {charge_status}")
+                logger.warning(f"Payment failed: {transaction.reference_number} - Status: {charge_status}")
 
-        elif gateway.is_cancelled_status(charge_status):
-            transaction.status = TransactionStatus.CANCELLED
-            transaction.gateway_response = webhook_data.raw_data
-            transaction.save()
+            elif gateway.is_cancelled_status(charge_status):
+                transaction.status = TransactionStatus.CANCELLED
+                transaction.gateway_response = webhook_data.raw_data
+                transaction.save()
 
-            logger.info(f"Payment cancelled: {transaction.reference_number}")
+                logger.info(f"Payment cancelled: {transaction.reference_number}")
 
-        else:
-            # Other statuses (IN_PROGRESS, INITIATED, etc.)
-            transaction.gateway_response = webhook_data.raw_data
-            transaction.save()
-            logger.info(f"Payment status update: {transaction.reference_number} - {charge_status}")
+            else:
+                # Other statuses (IN_PROGRESS, INITIATED, etc.)
+                transaction.gateway_response = webhook_data.raw_data
+                transaction.save()
+                logger.info(f"Payment status update: {transaction.reference_number} - {charge_status}")
+
+            # Mark webhook as processed
+            webhook_log.response_status = 200
+            webhook_log.response_body = {'success': True, 'message': 'Webhook processed successfully'}
+            webhook_log.mark_processed()
+
+        except Exception as e:
+            logger.error(f"Error processing webhook: {str(e)}")
+            webhook_log.mark_failed(str(e))
+            return Response({
+                'success': False,
+                'message': 'Error processing webhook'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
             'success': True,

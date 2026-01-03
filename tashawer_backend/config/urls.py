@@ -20,9 +20,12 @@ urlpatterns = [
     path('api/v1/consultants/', include('apps.accounts.consultant_urls')),
     path('api/v1/projects/', include('apps.projects.urls')),
     path('api/v1/proposals/', include('apps.proposals.urls')),
+    path('api/v1/orders/', include('apps.orders.urls')),
     path('api/v1/messages/', include('apps.messages.urls')),
     path('api/v1/payments/', include('apps.payments.urls')),
     path('api/v1/reviews/', include('apps.reviews.urls')),
+    path('api/v1/disputes/', include('apps.disputes.urls')),
+    path('api/v1/notifications/', include('apps.notifications.urls')),
 
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

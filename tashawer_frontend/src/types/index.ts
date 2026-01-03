@@ -242,3 +242,6 @@ export * from './review';
 
 // Re-export consultant types
 export * from './consultant';
+
+// Re-export order types
+export * from './order';

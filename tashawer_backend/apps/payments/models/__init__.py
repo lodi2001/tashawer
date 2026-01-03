@@ -13,6 +13,23 @@ from .invoice import (
     InvoiceStatus,
     InvoiceType,
 )
+from .wallet import (
+    Wallet,
+    WalletStatus,
+    Deposit,
+    DepositStatus,
+)
+from .withdrawal import (
+    Withdrawal,
+    WithdrawalStatus,
+    BankAccount,
+)
+from .webhook import (
+    WebhookLog,
+    WebhookSource,
+    WebhookEventType,
+    WebhookStatus,
+)
 
 __all__ = [
     'Transaction',
@@ -24,4 +41,15 @@ __all__ = [
     'Invoice',
     'InvoiceStatus',
     'InvoiceType',
+    'Wallet',
+    'WalletStatus',
+    'Deposit',
+    'DepositStatus',
+    'Withdrawal',
+    'WithdrawalStatus',
+    'BankAccount',
+    'WebhookLog',
+    'WebhookSource',
+    'WebhookEventType',
+    'WebhookStatus',
 ]

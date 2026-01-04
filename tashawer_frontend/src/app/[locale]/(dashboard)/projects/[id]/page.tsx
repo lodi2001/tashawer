@@ -38,12 +38,17 @@ import {
   Paperclip,
   Download,
   Users,
+  MessageSquare,
 } from 'lucide-react';
+import { startConversation } from '@/lib/messages';
+import { useLocale } from 'next-intl';
 import { formatDistanceToNow, format } from 'date-fns';
 
 export default function ProjectDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const locale = useLocale();
+  const isRTL = locale === 'ar';
   const { user } = useAuthStore();
   const projectId = params.id as string;
 
@@ -51,6 +56,7 @@ export default function ProjectDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [messageLoading, setMessageLoading] = useState(false);
 
   useEffect(() => {
     const loadProject = async () => {
@@ -123,6 +129,26 @@ export default function ProjectDetailPage() {
       );
     } catch (err) {
       setError(handleApiError(err));
+    }
+  };
+
+  const handleMessageClient = async () => {
+    if (!project || !project.client) return;
+    try {
+      setMessageLoading(true);
+      setError(null);
+      const conversation = await startConversation({
+        recipient_id: project.client.id,
+        project_id: project.id,
+        message: isRTL
+          ? `مرحباً، أود التواصل معك بخصوص مشروع "${project.title}"`
+          : `Hello, I would like to discuss your project "${project.title}"`,
+      });
+      router.push(`/${locale}/messages/${conversation.id}`);
+    } catch (err) {
+      setError(handleApiError(err));
+    } finally {
+      setMessageLoading(false);
     }
   };
 
@@ -367,9 +393,9 @@ export default function ProjectDetailPage() {
             {!isOwner && project.client && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Posted By</CardTitle>
+                  <CardTitle>{isRTL ? 'نشر بواسطة' : 'Posted By'}</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
                       {project.client.full_name?.charAt(0) || 'C'}
@@ -381,6 +407,18 @@ export default function ProjectDetailPage() {
                       </p>
                     </div>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={handleMessageClient}
+                    disabled={messageLoading}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    {messageLoading
+                      ? (isRTL ? 'جاري...' : 'Loading...')
+                      : (isRTL ? 'مراسلة العميل' : 'Message Client')}
+                  </Button>
                 </CardContent>
               </Card>
             )}

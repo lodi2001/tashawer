@@ -21,6 +21,7 @@ class ProjectInfoSerializer(serializers.Serializer):
     budget_range = serializers.CharField()
     deadline = serializers.DateField()
     status = serializers.CharField()
+    client_id = serializers.UUIDField()
 
 
 class ProposalListSerializer(serializers.ModelSerializer):

@@ -34,12 +34,17 @@ import {
   Calendar,
   FileText,
   User,
+  MessageSquare,
 } from 'lucide-react';
+import { startConversation } from '@/lib/messages';
+import { useLocale } from 'next-intl';
 import { formatDistanceToNow, format } from 'date-fns';
 
 export default function ProposalDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const locale = useLocale();
+  const isRTL = locale === 'ar';
   const proposalId = params.id as string;
 
   const [proposal, setProposal] = useState<ProposalDetail | null>(null);
@@ -48,6 +53,7 @@ export default function ProposalDetailPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [messageLoading, setMessageLoading] = useState(false);
 
   useEffect(() => {
     const loadProposal = async () => {
@@ -108,6 +114,31 @@ export default function ProposalDetailPage() {
     }
   };
 
+  const handleMessage = async () => {
+    if (!proposal) return;
+    try {
+      setMessageLoading(true);
+      setError(null);
+      // Determine recipient based on who is viewing
+      const recipientId = proposal.is_owner
+        ? proposal.project.client_id  // Consultant messaging client
+        : proposal.consultant.id;     // Client messaging consultant
+
+      const conversation = await startConversation({
+        recipient_id: recipientId,
+        proposal_id: proposal.id,
+        message: isRTL
+          ? `مرحباً، أود التواصل معك بخصوص العرض على مشروع "${proposal.project.title}"`
+          : `Hello, I would like to discuss the proposal for "${proposal.project.title}"`,
+      });
+      router.push(`/${locale}/messages/${conversation.id}`);
+    } catch (err) {
+      setError(handleApiError(err));
+    } finally {
+      setMessageLoading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -164,7 +195,7 @@ export default function ProposalDetailPage() {
                 disabled={actionLoading === 'accept'}
               >
                 <CheckCircle className="h-4 w-4 mr-2" />
-                {actionLoading === 'accept' ? 'Accepting...' : 'Accept'}
+                {actionLoading === 'accept' ? (isRTL ? 'جاري القبول...' : 'Accepting...') : (isRTL ? 'قبول' : 'Accept')}
               </Button>
             )}
             {canReject && (
@@ -175,7 +206,7 @@ export default function ProposalDetailPage() {
                 disabled={actionLoading === 'reject'}
               >
                 <XCircle className="h-4 w-4 mr-2" />
-                Reject
+                {isRTL ? 'رفض' : 'Reject'}
               </Button>
             )}
             {canWithdraw && (
@@ -185,9 +216,20 @@ export default function ProposalDetailPage() {
                 onClick={handleWithdraw}
                 disabled={actionLoading === 'withdraw'}
               >
-                {actionLoading === 'withdraw' ? 'Withdrawing...' : 'Withdraw'}
+                {actionLoading === 'withdraw' ? (isRTL ? 'جاري السحب...' : 'Withdrawing...') : (isRTL ? 'سحب' : 'Withdraw')}
               </Button>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleMessage}
+              disabled={messageLoading}
+            >
+              <MessageSquare className="h-4 w-4 mr-2" />
+              {messageLoading
+                ? (isRTL ? 'جاري...' : 'Loading...')
+                : (isRTL ? 'إرسال رسالة' : 'Message')}
+            </Button>
           </div>
         </div>
 

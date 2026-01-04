@@ -14,6 +14,7 @@ export interface ProjectInfo {
   budget_range: string;
   deadline: string;
   status: string;
+  client_id: string;
 }
 
 // Proposal List Item

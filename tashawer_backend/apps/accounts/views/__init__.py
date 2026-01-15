@@ -16,6 +16,7 @@ from apps.accounts.views.registration import (
 )
 from apps.accounts.views.profile import (
     ProfileView,
+    AvatarUploadView,
 )
 from apps.accounts.views.admin import (
     AdminUserListView,
@@ -57,6 +58,7 @@ __all__ = [
     'OrganizationRegistrationView',
     'ConsultantRegistrationView',
     'ProfileView',
+    'AvatarUploadView',
     'AdminUserListView',
     'AdminUserDetailView',
     'AdminApproveUserView',

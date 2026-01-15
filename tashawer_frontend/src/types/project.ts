@@ -106,6 +106,15 @@ export interface ProjectListResponse {
   };
 }
 
+// Sort Options
+export type ProjectSortOption =
+  | 'newest'
+  | 'relevance'
+  | 'deadline'
+  | 'budget_high'
+  | 'budget_low'
+  | 'most_proposals';
+
 // Project Filters
 export interface ProjectFilters {
   category?: string;
@@ -113,6 +122,10 @@ export interface ProjectFilters {
   budget_min?: number;
   budget_max?: number;
   search?: string;
+  location?: string;
+  deadline_before?: string;  // YYYY-MM-DD
+  deadline_after?: string;   // YYYY-MM-DD
+  sort?: ProjectSortOption;
   page?: number;
   page_size?: number;
 }

@@ -46,6 +46,7 @@ class UserSerializer(serializers.ModelSerializer):
 class IndividualProfileSerializer(serializers.ModelSerializer):
     """Serializer for Individual Profile."""
     user = UserSerializer(read_only=True)
+    avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = IndividualProfile
@@ -74,10 +75,20 @@ class IndividualProfileSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
 
+    def get_avatar(self, obj):
+        """Return absolute URL for avatar."""
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        return None
+
 
 class OrganizationProfileSerializer(serializers.ModelSerializer):
     """Serializer for Organization Profile."""
     user = UserSerializer(read_only=True)
+    logo = serializers.SerializerMethodField()
 
     class Meta:
         model = OrganizationProfile
@@ -110,10 +121,20 @@ class OrganizationProfileSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
 
+    def get_logo(self, obj):
+        """Return absolute URL for logo."""
+        if obj.logo:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.logo.url)
+            return obj.logo.url
+        return None
+
 
 class ConsultantProfileSerializer(serializers.ModelSerializer):
     """Serializer for Consultant Profile."""
     user = UserSerializer(read_only=True)
+    avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = ConsultantProfile
@@ -154,6 +175,15 @@ class ConsultantProfileSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
+
+    def get_avatar(self, obj):
+        """Return absolute URL for avatar."""
+        if obj.avatar:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.avatar.url)
+            return obj.avatar.url
+        return None
 
 
 class PublicConsultantProfileSerializer(serializers.ModelSerializer):

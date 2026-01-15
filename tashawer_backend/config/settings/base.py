@@ -49,6 +49,7 @@ LOCAL_APPS = [
     'apps.reviews',
     'apps.disputes',
     'apps.notifications',
+    'apps.ai',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -290,3 +291,39 @@ FIREBASE_CREDENTIALS_PATH = config(
     'FIREBASE_CREDENTIALS_PATH',
     default=str(BASE_DIR / 'config' / 'tashawer-22207-firebase-adminsdk-fbsvc-c620fa97ef.json')
 )
+
+
+# Supabase Storage Settings
+# Documentation: https://supabase.com/docs/guides/storage
+SUPABASE_URL = config('SUPABASE_URL', default='')
+SUPABASE_SERVICE_ROLE_KEY = config('SUPABASE_SERVICE_ROLE_KEY', default='')
+SUPABASE_STORAGE_BUCKET = config('SUPABASE_STORAGE_BUCKET', default='tashawer-files')
+USE_SUPABASE_STORAGE = config('USE_SUPABASE_STORAGE', default=False, cast=bool)
+
+# Folder structure in Supabase Storage
+# Bucket (tashawer-files)
+# ├── projects/
+# │   └── {project_id}/
+# │       └── attachments/
+# └── orders/
+#     └── {order_id}/
+#         └── deliverables/
+
+
+# File Upload Settings
+FILE_UPLOAD_MAX_SIZE = config('FILE_UPLOAD_MAX_SIZE', default=10 * 1024 * 1024, cast=int)  # 10MB
+FILE_UPLOAD_MAX_TOTAL_SIZE = config('FILE_UPLOAD_MAX_TOTAL_SIZE', default=50 * 1024 * 1024, cast=int)  # 50MB
+ALLOWED_FILE_EXTENSIONS = {
+    'documents': ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv'],
+    'images': ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'],
+    'archives': ['zip', 'rar', '7z'],
+    'engineering': ['dwg', 'dxf'],
+}
+
+
+# Claude AI Settings (Anthropic)
+ANTHROPIC_API_KEY = config('ANTHROPIC_API_KEY', default='')
+
+# AI Usage Limits (per user)
+AI_DAILY_LIMIT = config('AI_DAILY_LIMIT', default=10, cast=int)
+AI_MONTHLY_LIMIT = config('AI_MONTHLY_LIMIT', default=100, cast=int)

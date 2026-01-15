@@ -292,26 +292,45 @@ class BrowseProjectsView(APIView):
 
     def get(self, request):
         """
-        Browse open projects.
+        Browse open projects with full-text search and advanced filtering.
 
         Query parameters:
-        - search: search in title and description
+        - search: search in title and description (PostgreSQL full-text search)
         - category: filter by category ID
         - budget_min: minimum budget filter
         - budget_max: maximum budget filter
-        - location: filter by location
-        - sort: sort by (newest, deadline, budget_high, budget_low)
+        - location: filter by location (case-insensitive contains)
+        - deadline_before: filter projects with deadline on or before date (YYYY-MM-DD)
+        - deadline_after: filter projects with deadline on or after date (YYYY-MM-DD)
+        - sort: sort by one of:
+            - newest: most recently published (default)
+            - relevance: search relevance (only when search is active)
+            - deadline: earliest deadline first
+            - budget_high: highest budget first
+            - budget_low: lowest budget first
+            - most_proposals: most proposals first
         - page: page number (default: 1)
         - page_size: items per page (default: 12, max: 50)
         """
+        from django.db.models import Q, Count
+        from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
+
         projects = Project.objects.filter(status=ProjectStatus.OPEN)
 
-        # Search
+        # Full-text search using PostgreSQL
         search = request.query_params.get('search')
         if search:
-            from django.db.models import Q
-            projects = projects.filter(
-                Q(title__icontains=search) | Q(description__icontains=search)
+            # Create search vector for title and description
+            search_vector = SearchVector('title', weight='A') + SearchVector('description', weight='B')
+            search_query = SearchQuery(search, search_type='plain')
+
+            projects = projects.annotate(
+                search=search_vector,
+                rank=SearchRank(search_vector, search_query)
+            ).filter(
+                Q(search=search_query) |
+                Q(title__icontains=search) |
+                Q(description__icontains=search)
             )
 
         # Filter by category
@@ -333,9 +352,24 @@ class BrowseProjectsView(APIView):
         if location:
             projects = projects.filter(location__icontains=location)
 
+        # Filter by deadline range
+        deadline_before = request.query_params.get('deadline_before')
+        if deadline_before:
+            projects = projects.filter(deadline__lte=deadline_before)
+
+        deadline_after = request.query_params.get('deadline_after')
+        if deadline_after:
+            projects = projects.filter(deadline__gte=deadline_after)
+
+        # Annotate with proposal count for sorting
+        projects = projects.annotate(proposal_count=Count('proposals'))
+
         # Sorting
         sort = request.query_params.get('sort', 'newest')
-        if sort == 'newest':
+        if sort == 'relevance' and search:
+            # Sort by search relevance (only when search is active)
+            projects = projects.order_by('-rank', '-published_at')
+        elif sort == 'newest':
             projects = projects.order_by('-published_at', '-created_at')
         elif sort == 'deadline':
             projects = projects.order_by('deadline')
@@ -343,8 +377,14 @@ class BrowseProjectsView(APIView):
             projects = projects.order_by('-budget_max')
         elif sort == 'budget_low':
             projects = projects.order_by('budget_min')
+        elif sort == 'most_proposals':
+            projects = projects.order_by('-proposal_count', '-published_at')
         else:
-            projects = projects.order_by('-published_at', '-created_at')
+            # Default: relevance if searching, newest otherwise
+            if search:
+                projects = projects.order_by('-rank', '-published_at')
+            else:
+                projects = projects.order_by('-published_at', '-created_at')
 
         # Pagination
         page = int(request.query_params.get('page', 1))

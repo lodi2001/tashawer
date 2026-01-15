@@ -144,6 +144,34 @@ export const updateProfile = async (data: Partial<UserProfile>): Promise<UserPro
   throw new Error(response.data.error?.message || 'Failed to update profile');
 };
 
+// Upload avatar
+export const uploadAvatar = async (file: File): Promise<{ avatar_url: string }> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await api.post<ApiResponse<{ avatar_url: string }>>(
+    '/auth/profile/avatar/',
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }
+  );
+  if (response.data.success && response.data.data) {
+    return response.data.data;
+  }
+  throw new Error(response.data.error?.message || 'Failed to upload avatar');
+};
+
+// Delete avatar
+export const deleteAvatar = async (): Promise<void> => {
+  const response = await api.delete<ApiResponse<null>>('/auth/profile/avatar/');
+  if (!response.data.success) {
+    throw new Error(response.data.error?.message || 'Failed to delete avatar');
+  }
+};
+
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
   return !!getAccessToken();

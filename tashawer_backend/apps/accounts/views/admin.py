@@ -86,7 +86,7 @@ class AdminUserListView(ListAPIView):
             'organization_profile',
             'consultant_profile',
         ).exclude(
-            user_type=User.UserType.ADMIN  # Don't show other admins
+            role='admin'  # Don't show other admins
         )
 
     def list(self, request, *args, **kwargs):
@@ -201,7 +201,7 @@ class AdminSuspendUserView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Prevent suspending other admins
-        if user.user_type == User.UserType.ADMIN:
+        if user.role == 'admin':
             return Response({
                 'success': False,
                 'error': {'message': 'Cannot suspend admin accounts.'}
@@ -351,7 +351,7 @@ class AdminEditUserView(APIView):
                     profile.address = data['address']
                 profile.save()
 
-        elif user.user_type == User.UserType.CONSULTANT:
+        elif user.role == 'consultant':
             profile = getattr(user, 'consultant_profile', None)
             if profile:
                 if 'full_name' in data:

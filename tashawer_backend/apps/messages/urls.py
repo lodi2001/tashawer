@@ -7,6 +7,14 @@ from .views import (
     MarkConversationReadView,
     UnreadCountView,
 )
+from .views.admin import (
+    AdminConversationListView,
+    AdminConversationDetailView,
+    AdminConversationMessagesView,
+    AdminConversationExportView,
+    AdminMessageSearchView,
+    AdminMessagingStatsView,
+)
 
 app_name = 'messaging'
 
@@ -20,4 +28,12 @@ urlpatterns = [
     path('conversations/<uuid:pk>/', ConversationDetailView.as_view(), name='conversation-detail'),
     path('conversations/<uuid:pk>/messages/', ConversationMessagesView.as_view(), name='conversation-messages'),
     path('conversations/<uuid:pk>/mark-read/', MarkConversationReadView.as_view(), name='mark-read'),
+
+    # Admin routes
+    path('admin/conversations/', AdminConversationListView.as_view(), name='admin-conversation-list'),
+    path('admin/conversations/<uuid:pk>/', AdminConversationDetailView.as_view(), name='admin-conversation-detail'),
+    path('admin/conversations/<uuid:pk>/messages/', AdminConversationMessagesView.as_view(), name='admin-conversation-messages'),
+    path('admin/conversations/<uuid:pk>/export/', AdminConversationExportView.as_view(), name='admin-conversation-export'),
+    path('admin/search/', AdminMessageSearchView.as_view(), name='admin-message-search'),
+    path('admin/stats/', AdminMessagingStatsView.as_view(), name='admin-messaging-stats'),
 ]

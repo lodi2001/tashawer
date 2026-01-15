@@ -134,3 +134,67 @@ class Message(BaseModel):
         # Update conversation's last_message_at when a new message is created
         if is_new:
             self.conversation.update_last_message_at()
+
+
+class MessageAttachment(BaseModel):
+    """
+    Attachment model for message files.
+    """
+
+    message = models.ForeignKey(
+        Message,
+        on_delete=models.CASCADE,
+        related_name='attachments',
+        help_text="The message this attachment belongs to"
+    )
+    file_url = models.URLField(
+        max_length=500,
+        help_text="URL to the file in storage"
+    )
+    original_filename = models.CharField(
+        max_length=255,
+        help_text="Original filename when uploaded"
+    )
+    file_size = models.PositiveIntegerField(
+        help_text="File size in bytes"
+    )
+    file_type = models.CharField(
+        max_length=100,
+        help_text="MIME type of the file"
+    )
+    thumbnail_url = models.URLField(
+        max_length=500,
+        blank=True,
+        null=True,
+        help_text="URL to thumbnail for images"
+    )
+
+    class Meta:
+        db_table = 'message_attachments'
+        verbose_name = 'Message Attachment'
+        verbose_name_plural = 'Message Attachments'
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Attachment: {self.original_filename}"
+
+    @property
+    def file_size_display(self):
+        """Return human-readable file size."""
+        size = self.file_size
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if size < 1024:
+                return f"{size:.1f} {unit}"
+            size /= 1024
+        return f"{size:.1f} TB"
+
+    @property
+    def is_image(self):
+        """Check if the attachment is an image."""
+        return self.file_type.startswith('image/')
+
+    @property
+    def is_document(self):
+        """Check if the attachment is a document."""
+        doc_types = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats']
+        return any(self.file_type.startswith(t) for t in doc_types)

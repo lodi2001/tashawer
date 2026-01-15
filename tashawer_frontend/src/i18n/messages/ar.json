@@ -97,7 +97,10 @@
     "myProjects": "مشاريعي",
     "newProject": "مشروع جديد",
     "users": "المستخدمون",
-    "auditLogs": "سجلات النظام"
+    "auditLogs": "سجلات النظام",
+    "analytics": "التحليلات",
+    "withdrawals": "طلبات السحب",
+    "bankAccounts": "الحسابات البنكية"
   },
   "dashboard": {
     "welcome": "مرحباً",

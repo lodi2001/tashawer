@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import {
@@ -14,6 +15,8 @@ import {
   Alert,
   AlertDescription,
 } from '@/components/ui';
+import { FileUpload, SelectedFile, formatFileSize } from '@/components/ui/FileUpload';
+import { FilePreview, FilePreviewItem } from '@/components/ui/FilePreview';
 import {
   getOrder,
   startOrderWork,
@@ -34,6 +37,7 @@ import {
   deleteDeliverable,
 } from '@/lib/orders';
 import { handleApiError } from '@/lib/api';
+import { createPreviewUrl, revokePreviewUrl } from '@/lib/fileValidation';
 import { useAuthStore } from '@/store/authStore';
 import type { OrderDetail, MilestoneListItem, Deliverable, MilestoneDetail } from '@/types';
 import {
@@ -60,6 +64,8 @@ import { format, formatDistanceToNow } from 'date-fns';
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const locale = useLocale();
+  const isRTL = locale === 'ar';
   const { user } = useAuthStore();
   const orderNumber = params.orderNumber as string;
 
@@ -592,6 +598,7 @@ export default function OrderDetailPage() {
           onClose={() => setShowUploadModal(null)}
           onSubmit={handleUploadDeliverable}
           loading={actionLoading?.startsWith('upload-')}
+          isRTL={isRTL}
         />
       )}
 
@@ -884,48 +891,106 @@ function UploadModal({
   onClose,
   onSubmit,
   loading,
+  isRTL = false,
 }: {
   milestoneId: string;
   onClose: () => void;
   onSubmit: (milestoneId: string, file: File, description?: string) => void;
   loading?: boolean;
+  isRTL?: boolean;
 }) {
-  const [file, setFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [description, setDescription] = useState('');
+
+  const t = {
+    en: {
+      uploadDeliverable: 'Upload Deliverable',
+      file: 'File',
+      description: 'Description',
+      optionalDesc: 'Optional description of the deliverable...',
+      cancel: 'Cancel',
+      upload: 'Upload',
+      uploading: 'Uploading...',
+    },
+    ar: {
+      uploadDeliverable: 'رفع ملف التسليم',
+      file: 'الملف',
+      description: 'الوصف',
+      optionalDesc: 'وصف اختياري للملف المسلم...',
+      cancel: 'إلغاء',
+      upload: 'رفع',
+      uploading: 'جاري الرفع...',
+    },
+  };
+
+  const text = t[isRTL ? 'ar' : 'en'];
+
+  const handleFilesSelected = useCallback((files: File[]) => {
+    // Only allow one file at a time for deliverables
+    const file = files[0];
+    if (file) {
+      const preview = createPreviewUrl(file);
+      setSelectedFiles([{
+        file,
+        preview: preview || undefined,
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      }]);
+    }
+  }, []);
+
+  const handleFileRemove = useCallback((fileId: string) => {
+    setSelectedFiles((prev) => {
+      const file = prev.find((f) => f.id === fileId);
+      if (file?.preview) {
+        revokePreviewUrl(file.preview);
+      }
+      return [];
+    });
+  }, []);
+
+  const handleSubmit = () => {
+    if (selectedFiles.length > 0) {
+      onSubmit(milestoneId, selectedFiles[0].file, description || undefined);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold mb-4">Upload Deliverable</h3>
+      <div className="bg-white rounded-lg p-6 w-full max-w-lg mx-4">
+        <h3 className="text-lg font-semibold mb-4 text-brand-gray">{text.uploadDeliverable}</h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">File *</label>
-            <input
-              type="file"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="w-full border rounded-md p-2"
-              required
+            <label className="block text-sm font-medium text-brand-gray mb-2">{text.file} *</label>
+            <FileUpload
+              onFilesSelected={handleFilesSelected}
+              onFileRemove={handleFileRemove}
+              selectedFiles={selectedFiles}
+              multiple={false}
+              maxFiles={1}
+              showPreview={true}
+              disabled={loading}
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <label className="block text-sm font-medium text-brand-gray mb-1">{text.description}</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border rounded-md p-2 h-20 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
-              placeholder="Optional description"
+              className="w-full border border-brand-yellow/30 rounded-md p-3 h-20 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
+              placeholder={text.optionalDesc}
+              disabled={loading}
             />
           </div>
         </div>
         <div className="flex justify-end gap-3 mt-6">
           <Button variant="outline" onClick={onClose} disabled={loading}>
-            Cancel
+            {text.cancel}
           </Button>
           <Button
-            onClick={() => file && onSubmit(milestoneId, file, description || undefined)}
-            disabled={loading || !file}
+            onClick={handleSubmit}
+            disabled={loading || selectedFiles.length === 0}
           >
-            {loading ? 'Uploading...' : 'Upload'}
+            {loading ? text.uploading : text.upload}
           </Button>
         </div>
       </div>

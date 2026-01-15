@@ -111,17 +111,28 @@ export async function addDisputeMessage(
 
 // ============ Admin Dispute APIs ============
 
-/**
- * Get all disputes (admin)
- */
-export async function getAdminDisputes(filters?: {
+export interface DisputeFilters {
   status?: string;
   assigned_to?: string;
   date_from?: string;
   date_to?: string;
   search?: string;
-}): Promise<DisputeListItem[]> {
-  const response = await api.get<{ success: boolean; data: DisputeListItem[] }>(
+  page?: number;
+  page_size?: number;
+}
+
+export interface PaginatedDisputeResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: DisputeListItem[];
+}
+
+/**
+ * Get all disputes (admin) with pagination
+ */
+export async function getAdminDisputes(filters?: DisputeFilters): Promise<PaginatedDisputeResponse> {
+  const response = await api.get<{ success: boolean; data: PaginatedDisputeResponse }>(
     '/disputes/admin/list/',
     { params: filters }
   );

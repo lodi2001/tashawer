@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import {
   Card,
@@ -14,10 +14,10 @@ import {
   Spinner,
 } from '@/components/ui';
 import { useAuthStore } from '@/store/authStore';
-import { updateProfile } from '@/lib/auth';
+import { updateProfile, uploadAvatar, deleteAvatar } from '@/lib/auth';
 import { handleApiError } from '@/lib/api';
 import type { IndividualProfile, OrganizationProfile, ConsultantProfile } from '@/types';
-import { User, Building2, Briefcase, CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { User, Building2, Briefcase, CheckCircle2, Clock, XCircle, Camera, Trash2 } from 'lucide-react';
 
 export default function ProfilePage() {
   const { user, profile, setProfile, fetchProfile } = useAuthStore();
@@ -25,6 +25,11 @@ export default function ProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Avatar state
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
   const [formData, setFormData] = useState<Record<string, string | number>>({});
@@ -37,6 +42,9 @@ export default function ProfilePage() {
   useEffect(() => {
     if (profile) {
       initFormData();
+      // Set avatar URL from profile
+      const p = profile as any;
+      setAvatarUrl(p.avatar || p.logo || null);
     }
   }, [profile, user?.role, user?.user_type]);
 
@@ -107,6 +115,62 @@ export default function ProfilePage() {
       setError(handleApiError(err));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setError('Please select an image file (JPEG, PNG, GIF, or WebP)');
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size must be less than 5MB');
+      return;
+    }
+
+    try {
+      setIsUploadingAvatar(true);
+      setError(null);
+      const result = await uploadAvatar(file);
+      setAvatarUrl(result.avatar_url);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(handleApiError(err));
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    if (!avatarUrl) return;
+
+    try {
+      setIsUploadingAvatar(true);
+      setError(null);
+      await deleteAvatar();
+      setAvatarUrl(null);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      setError(handleApiError(err));
+    } finally {
+      setIsUploadingAvatar(false);
     }
   };
 
@@ -181,13 +245,61 @@ export default function ProfilePage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-blue/10 text-brand-blue">
-                  {getIcon()}
+                {/* Avatar Upload Section */}
+                <div className="relative group">
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    className="hidden"
+                  />
+                  <div
+                    onClick={handleAvatarClick}
+                    className="relative h-16 w-16 rounded-full cursor-pointer overflow-hidden border-2 border-brand-blue/20 hover:border-brand-blue/50 transition-colors"
+                  >
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt="Profile"
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-brand-blue/10 text-brand-blue">
+                        {getIcon()}
+                      </div>
+                    )}
+                    {/* Overlay */}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      {isUploadingAvatar ? (
+                        <Spinner size="sm" className="text-white" />
+                      ) : (
+                        <Camera className="h-5 w-5 text-white" />
+                      )}
+                    </div>
+                  </div>
+                  {/* Delete Button */}
+                  {avatarUrl && !isUploadingAvatar && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteAvatar();
+                      }}
+                      className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
+                      title="Remove photo"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
                 <div>
                   <CardTitle>Profile Settings</CardTitle>
                   <p className="text-sm text-gray-500 mt-1">
                     Manage your account information
+                  </p>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    Click the photo to change
                   </p>
                 </div>
               </div>

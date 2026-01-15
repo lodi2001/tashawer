@@ -71,3 +71,155 @@ class SoftDeleteModel(BaseModel):
 
     class Meta:
         abstract = True
+
+
+class PlatformSettings(models.Model):
+    """
+    Singleton model for platform-wide settings.
+    Stores sensitive data encrypted.
+    """
+    from django.core.cache import cache
+    from django.conf import settings as django_settings
+    import base64
+    import hashlib
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    # AI Settings
+    anthropic_api_key_encrypted = models.TextField(
+        blank=True,
+        default='',
+        help_text="Encrypted Anthropic API key for Claude AI"
+    )
+    ai_enabled = models.BooleanField(
+        default=True,
+        help_text="Enable/disable AI features platform-wide"
+    )
+    ai_daily_limit_per_user = models.PositiveIntegerField(
+        default=10,
+        help_text="Daily AI generation limit per user"
+    )
+    ai_monthly_limit_per_user = models.PositiveIntegerField(
+        default=100,
+        help_text="Monthly AI generation limit per user"
+    )
+
+    # Payment Settings
+    tap_secret_key_encrypted = models.TextField(
+        blank=True,
+        default='',
+        help_text="Encrypted Tap Payment secret key"
+    )
+    tap_public_key = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text="Tap Payment public key"
+    )
+
+    # Platform Settings
+    platform_fee_percentage = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=10.00,
+        help_text="Platform fee percentage"
+    )
+    maintenance_mode = models.BooleanField(
+        default=False,
+        help_text="Enable maintenance mode"
+    )
+    maintenance_message = models.TextField(
+        blank=True,
+        default='',
+        help_text="Message to display during maintenance"
+    )
+
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'platform_settings'
+        verbose_name = 'Platform Settings'
+        verbose_name_plural = 'Platform Settings'
+
+    def __str__(self):
+        return "Platform Settings"
+
+    @staticmethod
+    def _get_encryption_key():
+        """Generate a Fernet key from Django's SECRET_KEY."""
+        from django.conf import settings as django_settings
+        import hashlib
+        import base64
+        key = hashlib.sha256(django_settings.SECRET_KEY.encode()).digest()
+        return base64.urlsafe_b64encode(key)
+
+    def _encrypt(self, value: str) -> str:
+        """Encrypt a string value."""
+        if not value:
+            return ''
+        try:
+            from cryptography.fernet import Fernet
+            fernet = Fernet(self._get_encryption_key())
+            return fernet.encrypt(value.encode()).decode()
+        except Exception:
+            return value  # Fallback to unencrypted if cryptography not available
+
+    def _decrypt(self, value: str) -> str:
+        """Decrypt an encrypted string value."""
+        if not value:
+            return ''
+        try:
+            from cryptography.fernet import Fernet
+            fernet = Fernet(self._get_encryption_key())
+            return fernet.decrypt(value.encode()).decode()
+        except Exception:
+            return value  # Fallback if decryption fails
+
+    def save(self, *args, **kwargs):
+        from django.core.cache import cache
+        super().save(*args, **kwargs)
+        cache.delete('platform_settings')
+
+    @classmethod
+    def get_settings(cls):
+        """Get or create the singleton settings instance with caching."""
+        from django.core.cache import cache
+        cached = cache.get('platform_settings')
+        if cached:
+            return cached
+
+        settings_obj, _ = cls.objects.get_or_create(
+            pk=cls.objects.first().pk if cls.objects.exists() else uuid.uuid4()
+        )
+        cache.set('platform_settings', settings_obj, timeout=300)
+        return settings_obj
+
+    def set_anthropic_api_key(self, api_key: str):
+        """Set and encrypt the Anthropic API key."""
+        self.anthropic_api_key_encrypted = self._encrypt(api_key) if api_key else ''
+
+    def get_anthropic_api_key(self) -> str:
+        """Get the decrypted Anthropic API key."""
+        return self._decrypt(self.anthropic_api_key_encrypted)
+
+    def set_tap_secret_key(self, secret_key: str):
+        """Set and encrypt the Tap secret key."""
+        self.tap_secret_key_encrypted = self._encrypt(secret_key) if secret_key else ''
+
+    def get_tap_secret_key(self) -> str:
+        """Get the decrypted Tap secret key."""
+        return self._decrypt(self.tap_secret_key_encrypted)
+
+    @classmethod
+    def get_anthropic_key(cls) -> str:
+        """Static method to get Anthropic API key."""
+        settings_obj = cls.get_settings()
+        return settings_obj.get_anthropic_api_key()
+
+    @classmethod
+    def is_ai_enabled(cls) -> bool:
+        """Check if AI features are enabled."""
+        settings_obj = cls.get_settings()
+        return settings_obj.ai_enabled and bool(settings_obj.get_anthropic_api_key())

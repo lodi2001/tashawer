@@ -17,6 +17,7 @@ from apps.accounts.views import (
     OrganizationRegistrationView,
     ConsultantRegistrationView,
     ProfileView,
+    AvatarUploadView,
     AdminUserListView,
     AdminUserDetailView,
     AdminApproveUserView,
@@ -53,6 +54,7 @@ urlpatterns = [
 
     # Profile (NUW-20)
     path('profile/', ProfileView.as_view(), name='profile'),
+    path('profile/avatar/', AvatarUploadView.as_view(), name='profile-avatar'),
 
     # Admin User Management (NUW-21)
     path('admin/users/', AdminUserListView.as_view(), name='admin-user-list'),

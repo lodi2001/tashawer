@@ -56,6 +56,10 @@ export const browseProjects = async (
   if (filters.budget_min) params.append('budget_min', filters.budget_min.toString());
   if (filters.budget_max) params.append('budget_max', filters.budget_max.toString());
   if (filters.search) params.append('search', filters.search);
+  if (filters.location) params.append('location', filters.location);
+  if (filters.deadline_before) params.append('deadline_before', filters.deadline_before);
+  if (filters.deadline_after) params.append('deadline_after', filters.deadline_after);
+  if (filters.sort) params.append('sort', filters.sort);
 
   const response = await api.get<ApiResponse<BrowseProjectsResponse>>(
     `/projects/browse/?${params.toString()}`

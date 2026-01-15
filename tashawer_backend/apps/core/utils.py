@@ -153,3 +153,134 @@ def mask_mobile(mobile: str) -> str:
         return mobile
 
     return mobile[:4] + '***' + mobile[-4:]
+
+
+# File validation utilities
+def get_file_extension(filename: str) -> str:
+    """
+    Get file extension from filename.
+
+    Args:
+        filename: The filename
+
+    Returns:
+        File extension (lowercase, with dot)
+    """
+    if '.' in filename:
+        return '.' + filename.rsplit('.', 1)[1].lower()
+    return ''
+
+
+def validate_file_extension(
+    filename: str,
+    allowed_categories: Optional[list] = None
+) -> tuple[bool, Optional[str]]:
+    """
+    Validate file extension against allowed categories.
+
+    Args:
+        filename: The filename to validate
+        allowed_categories: List of categories to allow (documents, images, archives, engineering)
+                          If None, all categories are allowed
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    allowed_extensions = settings.ALLOWED_FILE_EXTENSIONS
+    extension = get_file_extension(filename).lstrip('.')
+
+    if not extension:
+        return False, "File must have an extension"
+
+    categories_to_check = (
+        allowed_categories
+        if allowed_categories
+        else list(allowed_extensions.keys())
+    )
+
+    for category in categories_to_check:
+        if category in allowed_extensions:
+            if extension in allowed_extensions[category]:
+                return True, None
+
+    return False, f"File type '.{extension}' is not allowed"
+
+
+def validate_file_size(
+    file_size: int,
+    max_size: Optional[int] = None
+) -> tuple[bool, Optional[str]]:
+    """
+    Validate file size.
+
+    Args:
+        file_size: Size of the file in bytes
+        max_size: Maximum allowed size in bytes (defaults to FILE_UPLOAD_MAX_SIZE)
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    max_size = max_size or settings.FILE_UPLOAD_MAX_SIZE
+
+    if file_size <= 0:
+        return False, "File is empty"
+
+    if file_size > max_size:
+        max_mb = max_size / (1024 * 1024)
+        file_mb = file_size / (1024 * 1024)
+        return False, f"File size ({file_mb:.2f}MB) exceeds maximum allowed ({max_mb:.2f}MB)"
+
+    return True, None
+
+
+def validate_file(
+    file,
+    allowed_categories: Optional[list] = None,
+    max_size: Optional[int] = None
+) -> tuple[bool, Optional[str]]:
+    """
+    Validate a Django file object (both extension and size).
+
+    Args:
+        file: Django UploadedFile or InMemoryUploadedFile
+        allowed_categories: List of categories to allow
+        max_size: Maximum allowed size in bytes
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    # Validate extension
+    is_valid, error = validate_file_extension(file.name, allowed_categories)
+    if not is_valid:
+        return False, error
+
+    # Validate size
+    is_valid, error = validate_file_size(file.size, max_size)
+    if not is_valid:
+        return False, error
+
+    return True, None
+
+
+def format_file_size(size_bytes: int) -> str:
+    """
+    Format file size to human readable string.
+
+    Args:
+        size_bytes: Size in bytes
+
+    Returns:
+        Human readable file size (e.g., "1.5 MB")
+    """
+    if size_bytes == 0:
+        return "0 Bytes"
+
+    sizes = ["Bytes", "KB", "MB", "GB", "TB"]
+    i = 0
+    size = float(size_bytes)
+
+    while size >= 1024 and i < len(sizes) - 1:
+        size /= 1024
+        i += 1
+
+    return f"{size:.2f} {sizes[i]}" if i > 0 else f"{int(size)} {sizes[i]}"

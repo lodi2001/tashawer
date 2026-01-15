@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.db.models import Count, Q
 
-from apps.messages.models import Conversation, Message
+from apps.messages.models import Conversation, Message, MessageAttachment
 from apps.messages.serializers import (
     ConversationListSerializer,
     ConversationDetailSerializer,
@@ -207,6 +207,12 @@ class ConversationMessagesView(APIView):
 
         Request body:
         - content: string (required)
+        - attachments: array (optional) - list of attachment objects with:
+          - file_url: string (required)
+          - original_filename: string (required)
+          - file_size: integer (required)
+          - file_type: string (required)
+          - thumbnail_url: string (optional)
         """
         conversation = get_object_or_404(
             Conversation.objects.filter(participants=request.user),
@@ -222,7 +228,19 @@ class ConversationMessagesView(APIView):
                 content=serializer.validated_data['content']
             )
 
-            logger.info(f"Message sent: {message.id} in conversation {conversation.id}")
+            # Create attachments if provided
+            attachments_data = serializer.validated_data.get('attachments', [])
+            for attachment_data in attachments_data:
+                MessageAttachment.objects.create(
+                    message=message,
+                    file_url=attachment_data['file_url'],
+                    original_filename=attachment_data['original_filename'],
+                    file_size=attachment_data['file_size'],
+                    file_type=attachment_data['file_type'],
+                    thumbnail_url=attachment_data.get('thumbnail_url'),
+                )
+
+            logger.info(f"Message sent: {message.id} in conversation {conversation.id} with {len(attachments_data)} attachments")
 
             message_serializer = MessageSerializer(
                 message,

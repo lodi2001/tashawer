@@ -2,14 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { Input, Button, SimpleSelect as Select } from '@/components/ui';
-import type { Category, ProjectFilters as Filters, ProjectStatus } from '@/types';
-import { Search, X, Filter } from 'lucide-react';
+import type { Category, ProjectFilters as Filters, ProjectStatus, ProjectSortOption } from '@/types';
+import { Search, X, Filter, ArrowUpDown } from 'lucide-react';
 
 interface ProjectFiltersProps {
   categories: Category[];
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
   showStatusFilter?: boolean;
+  showSortOptions?: boolean;
 }
 
 const statusOptions = [
@@ -21,11 +22,21 @@ const statusOptions = [
   { value: 'cancelled', label: 'Cancelled' },
 ];
 
+const sortOptions = [
+  { value: 'newest', label: 'Newest First' },
+  { value: 'relevance', label: 'Most Relevant' },
+  { value: 'deadline', label: 'Deadline (Soonest)' },
+  { value: 'budget_high', label: 'Budget (High to Low)' },
+  { value: 'budget_low', label: 'Budget (Low to High)' },
+  { value: 'most_proposals', label: 'Most Proposals' },
+];
+
 export function ProjectFilters({
   categories,
   filters,
   onFiltersChange,
   showStatusFilter = false,
+  showSortOptions = true,
 }: ProjectFiltersProps) {
   const [localSearch, setLocalSearch] = useState(filters.search || '');
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -47,9 +58,21 @@ export function ProjectFilters({
     onFiltersChange({ ...filters, status: (value as ProjectStatus) || undefined, page: 1 });
   };
 
+  const handleSortChange = (value: string) => {
+    onFiltersChange({ ...filters, sort: (value as ProjectSortOption) || undefined, page: 1 });
+  };
+
   const handleBudgetChange = (field: 'budget_min' | 'budget_max', value: string) => {
     const numValue = value ? parseInt(value) : undefined;
     onFiltersChange({ ...filters, [field]: numValue, page: 1 });
+  };
+
+  const handleLocationChange = (value: string) => {
+    onFiltersChange({ ...filters, location: value || undefined, page: 1 });
+  };
+
+  const handleDeadlineChange = (field: 'deadline_after' | 'deadline_before', value: string) => {
+    onFiltersChange({ ...filters, [field]: value || undefined, page: 1 });
   };
 
   const clearFilters = () => {
@@ -62,7 +85,10 @@ export function ProjectFilters({
     filters.status ||
     filters.budget_min ||
     filters.budget_max ||
-    filters.search;
+    filters.search ||
+    filters.location ||
+    filters.deadline_before ||
+    filters.deadline_after;
 
   const categoryOptions = [
     { value: '', label: 'All Categories' },
@@ -75,8 +101,8 @@ export function ProjectFilters({
   return (
     <div className="space-y-4">
       {/* Search Bar */}
-      <form onSubmit={handleSearchSubmit} className="flex gap-2">
-        <div className="relative flex-1">
+      <form onSubmit={handleSearchSubmit} className="flex flex-wrap gap-2">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
@@ -89,6 +115,17 @@ export function ProjectFilters({
         <Button type="submit" variant="default">
           Search
         </Button>
+        {showSortOptions && (
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-gray-400" />
+            <Select
+              value={filters.sort || 'newest'}
+              onChange={(e) => handleSortChange(e.target.value)}
+              options={sortOptions}
+              className="w-44"
+            />
+          </div>
+        )}
         <Button
           type="button"
           variant="outline"
@@ -129,6 +166,18 @@ export function ProjectFilters({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Location
+              </label>
+              <Input
+                type="text"
+                placeholder="e.g. Riyadh, Jeddah"
+                value={filters.location || ''}
+                onChange={(e) => handleLocationChange(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Min Budget (SAR)
               </label>
               <Input
@@ -150,6 +199,28 @@ export function ProjectFilters({
                 min={0}
                 value={filters.budget_max || ''}
                 onChange={(e) => handleBudgetChange('budget_max', e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Deadline From
+              </label>
+              <Input
+                type="date"
+                value={filters.deadline_after || ''}
+                onChange={(e) => handleDeadlineChange('deadline_after', e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Deadline To
+              </label>
+              <Input
+                type="date"
+                value={filters.deadline_before || ''}
+                onChange={(e) => handleDeadlineChange('deadline_before', e.target.value)}
               />
             </div>
           </div>
@@ -189,6 +260,39 @@ export function ProjectFilters({
               {categories.find((c) => c.id === filters.category)?.name || 'Category'}
               <button
                 onClick={() => onFiltersChange({ ...filters, category: undefined, page: 1 })}
+                className="hover:text-primary/70"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+          {filters.location && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-sm rounded-full">
+              Location: {filters.location}
+              <button
+                onClick={() => onFiltersChange({ ...filters, location: undefined, page: 1 })}
+                className="hover:text-primary/70"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+          {(filters.budget_min || filters.budget_max) && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-sm rounded-full">
+              Budget: {filters.budget_min || 0} - {filters.budget_max || '∞'} SAR
+              <button
+                onClick={() => onFiltersChange({ ...filters, budget_min: undefined, budget_max: undefined, page: 1 })}
+                className="hover:text-primary/70"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+          {(filters.deadline_after || filters.deadline_before) && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 bg-primary/10 text-primary text-sm rounded-full">
+              Deadline: {filters.deadline_after || 'Any'} - {filters.deadline_before || 'Any'}
+              <button
+                onClick={() => onFiltersChange({ ...filters, deadline_after: undefined, deadline_before: undefined, page: 1 })}
                 className="hover:text-primary/70"
               >
                 <X className="h-3 w-3" />

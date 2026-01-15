@@ -1,8 +1,42 @@
 from rest_framework import serializers
 from django.db.models import Q
-from apps.messages.models import Conversation, Message
+from apps.messages.models import Conversation, Message, MessageAttachment
 from apps.projects.models import Project
 from apps.proposals.models import Proposal
+
+
+class AttachmentSerializer(serializers.ModelSerializer):
+    """Serializer for message attachments"""
+
+    file_size_display = serializers.CharField(read_only=True)
+    is_image = serializers.BooleanField(read_only=True)
+    is_document = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = MessageAttachment
+        fields = [
+            'id',
+            'file_url',
+            'original_filename',
+            'file_size',
+            'file_size_display',
+            'file_type',
+            'thumbnail_url',
+            'is_image',
+            'is_document',
+            'created_at',
+        ]
+        read_only_fields = fields
+
+
+class AttachmentCreateSerializer(serializers.Serializer):
+    """Serializer for creating attachments"""
+
+    file_url = serializers.URLField()
+    original_filename = serializers.CharField(max_length=255)
+    file_size = serializers.IntegerField(min_value=1)
+    file_type = serializers.CharField(max_length=100)
+    thumbnail_url = serializers.URLField(required=False, allow_null=True)
 
 
 class ParticipantSerializer(serializers.Serializer):
@@ -21,6 +55,7 @@ class MessageSerializer(serializers.ModelSerializer):
 
     sender = ParticipantSerializer(read_only=True)
     is_own_message = serializers.SerializerMethodField()
+    attachments = AttachmentSerializer(many=True, read_only=True)
 
     class Meta:
         model = Message
@@ -28,6 +63,7 @@ class MessageSerializer(serializers.ModelSerializer):
             'id',
             'sender',
             'content',
+            'attachments',
             'is_read',
             'read_at',
             'is_own_message',
@@ -255,8 +291,14 @@ class MessageCreateSerializer(serializers.Serializer):
     """Serializer for sending a message"""
 
     content = serializers.CharField(max_length=5000)
+    attachments = AttachmentCreateSerializer(many=True, required=False)
 
     def validate_content(self, value):
         if not value.strip():
             raise serializers.ValidationError("Message content cannot be empty")
+        return value
+
+    def validate_attachments(self, value):
+        if value and len(value) > 10:
+            raise serializers.ValidationError("Maximum 10 attachments allowed per message")
         return value

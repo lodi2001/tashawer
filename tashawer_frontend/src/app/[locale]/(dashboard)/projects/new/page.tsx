@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import {
   Card,
@@ -14,9 +15,12 @@ import {
   AlertDescription,
   Spinner,
 } from '@/components/ui';
+import { FileUpload, SelectedFile } from '@/components/ui/FileUpload';
+import { UploadProgress, UploadItem } from '@/components/ui/UploadProgress';
 import { CategorySelect } from '@/components/projects';
-import { createProject, getCategories } from '@/lib/projects';
+import { createProject, getCategories, uploadAttachment } from '@/lib/projects';
 import { handleApiError } from '@/lib/api';
+import { createPreviewUrl, revokePreviewUrl } from '@/lib/fileValidation';
 import type { Category, ProjectCreateData } from '@/types';
 import { ArrowLeft, Save, Send } from 'lucide-react';
 import Link from 'next/link';
@@ -33,11 +37,68 @@ interface FormErrors {
 
 export default function CreateProjectPage() {
   const router = useRouter();
+  const locale = useLocale();
+  const isRTL = locale === 'ar';
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
+
+  // File upload states
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+
+  // Translations
+  const t = {
+    en: {
+      createProject: 'Create Project',
+      postNew: 'Post a new engineering project',
+      back: 'Back',
+      projectDetails: 'Project Details',
+      attachments: 'Attachments (Optional)',
+      projectTitle: 'Project Title',
+      enterTitle: 'Enter a descriptive title for your project',
+      description: 'Description',
+      describeProject: 'Describe your project in detail. Include scope, requirements, and expected deliverables.',
+      minBudget: 'Minimum Budget (SAR)',
+      maxBudget: 'Maximum Budget (SAR)',
+      deadline: 'Deadline',
+      location: 'Location (City)',
+      requirements: 'Additional Requirements (Optional)',
+      additionalReqs: 'Any additional requirements, specifications, or qualifications needed...',
+      cancel: 'Cancel',
+      saveAsDraft: 'Save as Draft',
+      publishProject: 'Publish Project',
+      minChars: 'minimum characters',
+      uploadingFiles: 'Uploading attachments...',
+    },
+    ar: {
+      createProject: 'إنشاء مشروع',
+      postNew: 'نشر مشروع هندسي جديد',
+      back: 'رجوع',
+      projectDetails: 'تفاصيل المشروع',
+      attachments: 'المرفقات (اختياري)',
+      projectTitle: 'عنوان المشروع',
+      enterTitle: 'أدخل عنواناً وصفياً لمشروعك',
+      description: 'الوصف',
+      describeProject: 'صف مشروعك بالتفصيل. اذكر النطاق والمتطلبات والمخرجات المتوقعة.',
+      minBudget: 'الحد الأدنى للميزانية (ر.س)',
+      maxBudget: 'الحد الأقصى للميزانية (ر.س)',
+      deadline: 'الموعد النهائي',
+      location: 'الموقع (المدينة)',
+      requirements: 'متطلبات إضافية (اختياري)',
+      additionalReqs: 'أي متطلبات أو مواصفات أو مؤهلات إضافية...',
+      cancel: 'إلغاء',
+      saveAsDraft: 'حفظ كمسودة',
+      publishProject: 'نشر المشروع',
+      minChars: 'الحد الأدنى من الأحرف',
+      uploadingFiles: 'جاري رفع المرفقات...',
+    },
+  };
+
+  const text = t[isRTL ? 'ar' : 'en'];
 
   const [formData, setFormData] = useState<ProjectCreateData>({
     title: '',
@@ -122,14 +183,96 @@ export default function CreateProjectPage() {
     }
   };
 
+  // Handle files selected from FileUpload component
+  const handleFilesSelected = useCallback((files: File[]) => {
+    const newSelectedFiles: SelectedFile[] = files.map((file) => ({
+      file,
+      preview: createPreviewUrl(file) || undefined,
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    }));
+    setSelectedFiles((prev) => [...prev, ...newSelectedFiles]);
+  }, []);
+
+  // Remove a selected file before upload
+  const handleFileRemove = useCallback((fileId: string) => {
+    setSelectedFiles((prev) => {
+      const file = prev.find((f) => f.id === fileId);
+      if (file?.preview) {
+        revokePreviewUrl(file.preview);
+      }
+      return prev.filter((f) => f.id !== fileId);
+    });
+  }, []);
+
+  // Dismiss upload notification
+  const handleDismissUpload = useCallback((uploadId: string) => {
+    setUploads((prev) => prev.filter((u) => u.id !== uploadId));
+  }, []);
+
   const handleSubmit = async (publish: boolean) => {
     if (!validateForm()) return;
 
     try {
       setIsSubmitting(true);
       setError(null);
+
+      // Create the project first
       const project = await createProject({ ...formData, publish });
-      router.push(`/projects/${project.id}`);
+
+      // Upload attachments if any
+      if (selectedFiles.length > 0) {
+        // Initialize upload tracking
+        const uploadItems: UploadItem[] = selectedFiles.map((sf) => ({
+          id: sf.id,
+          fileName: sf.file.name,
+          fileSize: sf.file.size,
+          progress: 0,
+          status: 'pending' as const,
+        }));
+        setUploads(uploadItems);
+
+        // Upload files sequentially
+        for (const selectedFile of selectedFiles) {
+          try {
+            setUploads((prev) =>
+              prev.map((u) =>
+                u.id === selectedFile.id ? { ...u, status: 'uploading', progress: 50 } : u
+              )
+            );
+
+            await uploadAttachment(project.id, selectedFile.file);
+
+            setUploads((prev) =>
+              prev.map((u) =>
+                u.id === selectedFile.id ? { ...u, status: 'success', progress: 100 } : u
+              )
+            );
+
+            // Revoke preview URL
+            if (selectedFile.preview) {
+              revokePreviewUrl(selectedFile.preview);
+            }
+          } catch (err) {
+            // Log error but continue - project is created
+            console.error('Failed to upload attachment:', err);
+            setUploads((prev) =>
+              prev.map((u) =>
+                u.id === selectedFile.id
+                  ? { ...u, status: 'error', error: handleApiError(err) }
+                  : u
+              )
+            );
+          }
+        }
+
+        // Clear selected files
+        setSelectedFiles([]);
+
+        // Wait a moment to show upload completion
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+
+      router.push(`/${locale}/projects/${project.id}`);
     } catch (err) {
       setError(handleApiError(err));
     } finally {
@@ -277,21 +420,48 @@ export default function CreateProjectPage() {
               {/* Requirements (Optional) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Additional Requirements (Optional)
+                  {text.requirements}
                 </label>
                 <textarea
                   className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="Any additional requirements, specifications, or qualifications needed..."
+                  placeholder={text.additionalReqs}
                   value={formData.requirements || ''}
                   onChange={(e) => handleChange('requirements', e.target.value)}
                 />
               </div>
 
+              {/* Attachments */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  {text.attachments}
+                </label>
+                <FileUpload
+                  onFilesSelected={handleFilesSelected}
+                  onFileRemove={handleFileRemove}
+                  selectedFiles={selectedFiles}
+                  multiple={true}
+                  maxFiles={10}
+                  showPreview={true}
+                  disabled={isSubmitting}
+                />
+
+                {/* Upload Progress (shown during submit) */}
+                {uploads.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm text-brand-gray mb-2">{text.uploadingFiles}</p>
+                    <UploadProgress
+                      uploads={uploads}
+                      onDismiss={handleDismissUpload}
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* Actions */}
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <Link href="/projects/my">
+                <Link href={`/${locale}/projects/my`}>
                   <Button type="button" variant="outline">
-                    Cancel
+                    {text.cancel}
                   </Button>
                 </Link>
                 <Button
@@ -300,8 +470,8 @@ export default function CreateProjectPage() {
                   onClick={() => handleSubmit(false)}
                   disabled={isSubmitting}
                 >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save as Draft
+                  <Save className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                  {text.saveAsDraft}
                 </Button>
                 <Button
                   type="button"
@@ -309,8 +479,8 @@ export default function CreateProjectPage() {
                   disabled={isSubmitting}
                   isLoading={isSubmitting}
                 >
-                  <Send className="h-4 w-4 mr-2" />
-                  Publish Project
+                  <Send className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                  {text.publishProject}
                 </Button>
               </div>
             </form>

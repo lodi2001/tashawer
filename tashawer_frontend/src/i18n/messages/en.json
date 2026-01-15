@@ -97,7 +97,10 @@
     "myProjects": "My Projects",
     "newProject": "New Project",
     "users": "Users",
-    "auditLogs": "Audit Logs"
+    "auditLogs": "Audit Logs",
+    "analytics": "Analytics",
+    "withdrawals": "Withdrawals",
+    "bankAccounts": "Bank Accounts"
   },
   "dashboard": {
     "welcome": "Welcome",

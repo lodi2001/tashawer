@@ -5,6 +5,10 @@ from .base import *  # noqa
 
 DEBUG = False
 
+# Supabase Storage (if enabled)
+if USE_SUPABASE_STORAGE:
+    DEFAULT_FILE_STORAGE = 'apps.core.storage.SupabaseStorage'
+
 # Security settings
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True

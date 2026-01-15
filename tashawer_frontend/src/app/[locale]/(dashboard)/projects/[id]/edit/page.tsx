@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import {
@@ -15,11 +16,15 @@ import {
   Alert,
   AlertDescription,
 } from '@/components/ui';
+import { FileUpload, SelectedFile } from '@/components/ui/FileUpload';
+import { FilePreview, FilePreviewItem } from '@/components/ui/FilePreview';
+import { UploadProgress, UploadItem } from '@/components/ui/UploadProgress';
 import { CategorySelect } from '@/components/projects';
-import { getProject, updateProject, getCategories, uploadAttachment } from '@/lib/projects';
+import { getProject, updateProject, getCategories, uploadAttachment, deleteAttachment } from '@/lib/projects';
 import { handleApiError } from '@/lib/api';
+import { createPreviewUrl, revokePreviewUrl } from '@/lib/fileValidation';
 import type { Category, ProjectDetail, ProjectUpdateData } from '@/types';
-import { ArrowLeft, Save, Upload } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 
 interface FormErrors {
   title?: string;
@@ -34,16 +39,74 @@ interface FormErrors {
 export default function EditProjectPage() {
   const params = useParams();
   const router = useRouter();
+  const locale = useLocale();
+  const isRTL = locale === 'ar';
   const projectId = params.id as string;
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
   const [success, setSuccess] = useState(false);
+
+  // File upload states
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
+  const [uploads, setUploads] = useState<UploadItem[]>([]);
+  const [deletingAttachment, setDeletingAttachment] = useState<string | null>(null);
+
+  // Translations
+  const t = {
+    en: {
+      editProject: 'Edit Project',
+      updateDetails: 'Update your project details',
+      back: 'Back',
+      projectDetails: 'Project Details',
+      attachments: 'Attachments',
+      projectTitle: 'Project Title',
+      enterTitle: 'Enter a descriptive title',
+      description: 'Description',
+      describeProject: 'Describe your project in detail',
+      minBudget: 'Minimum Budget (SAR)',
+      maxBudget: 'Maximum Budget (SAR)',
+      deadline: 'Deadline',
+      location: 'Location (City)',
+      requirements: 'Additional Requirements (Optional)',
+      additionalReqs: 'Any additional requirements...',
+      cancel: 'Cancel',
+      saveChanges: 'Save Changes',
+      projectUpdated: 'Project updated successfully!',
+      noAttachments: 'No attachments yet',
+      uploadedFiles: 'Uploaded Files',
+      addNewFiles: 'Add New Files',
+    },
+    ar: {
+      editProject: 'تعديل المشروع',
+      updateDetails: 'تحديث تفاصيل مشروعك',
+      back: 'رجوع',
+      projectDetails: 'تفاصيل المشروع',
+      attachments: 'المرفقات',
+      projectTitle: 'عنوان المشروع',
+      enterTitle: 'أدخل عنواناً وصفياً',
+      description: 'الوصف',
+      describeProject: 'صف مشروعك بالتفصيل',
+      minBudget: 'الحد الأدنى للميزانية (ر.س)',
+      maxBudget: 'الحد الأقصى للميزانية (ر.س)',
+      deadline: 'الموعد النهائي',
+      location: 'الموقع (المدينة)',
+      requirements: 'متطلبات إضافية (اختياري)',
+      additionalReqs: 'أي متطلبات إضافية...',
+      cancel: 'إلغاء',
+      saveChanges: 'حفظ التغييرات',
+      projectUpdated: 'تم تحديث المشروع بنجاح!',
+      noAttachments: 'لا توجد مرفقات بعد',
+      uploadedFiles: 'الملفات المرفوعة',
+      addNewFiles: 'إضافة ملفات جديدة',
+    },
+  };
+
+  const text = t[isRTL ? 'ar' : 'en'];
 
   const [formData, setFormData] = useState<ProjectUpdateData>({
     title: '',
@@ -161,29 +224,119 @@ export default function EditProjectPage() {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Handle files selected from FileUpload component
+  const handleFilesSelected = useCallback((files: File[]) => {
+    const newSelectedFiles: SelectedFile[] = files.map((file) => ({
+      file,
+      preview: createPreviewUrl(file) || undefined,
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    }));
+    setSelectedFiles((prev) => [...prev, ...newSelectedFiles]);
+  }, []);
 
+  // Remove a selected file before upload
+  const handleFileRemove = useCallback((fileId: string) => {
+    setSelectedFiles((prev) => {
+      const file = prev.find((f) => f.id === fileId);
+      if (file?.preview) {
+        revokePreviewUrl(file.preview);
+      }
+      return prev.filter((f) => f.id !== fileId);
+    });
+  }, []);
+
+  // Upload all selected files
+  const handleUploadFiles = async () => {
+    if (selectedFiles.length === 0) return;
+
+    // Initialize upload tracking
+    const uploadItems: UploadItem[] = selectedFiles.map((sf) => ({
+      id: sf.id,
+      fileName: sf.file.name,
+      fileSize: sf.file.size,
+      progress: 0,
+      status: 'pending' as const,
+    }));
+    setUploads(uploadItems);
+
+    // Upload files sequentially
+    for (const selectedFile of selectedFiles) {
+      try {
+        // Update status to uploading
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.id === selectedFile.id ? { ...u, status: 'uploading', progress: 30 } : u
+          )
+        );
+
+        const attachment = await uploadAttachment(projectId, selectedFile.file);
+
+        // Update status to success
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.id === selectedFile.id ? { ...u, status: 'success', progress: 100 } : u
+          )
+        );
+
+        // Add to project attachments
+        setProject((prev) =>
+          prev
+            ? {
+                ...prev,
+                attachments: [...prev.attachments, attachment],
+              }
+            : null
+        );
+
+        // Revoke preview URL
+        if (selectedFile.preview) {
+          revokePreviewUrl(selectedFile.preview);
+        }
+      } catch (err) {
+        setUploads((prev) =>
+          prev.map((u) =>
+            u.id === selectedFile.id
+              ? { ...u, status: 'error', error: handleApiError(err) }
+              : u
+          )
+        );
+      }
+    }
+
+    // Clear selected files after upload
+    setSelectedFiles([]);
+
+    // Clear upload progress after delay
+    setTimeout(() => {
+      setUploads([]);
+    }, 3000);
+  };
+
+  // Delete an existing attachment
+  const handleDeleteAttachment = async (attachmentId: string) => {
     try {
-      setIsUploading(true);
+      setDeletingAttachment(attachmentId);
       setError(null);
-      const attachment = await uploadAttachment(projectId, file);
+      await deleteAttachment(projectId, attachmentId);
       setProject((prev) =>
         prev
           ? {
               ...prev,
-              attachments: [...prev.attachments, attachment],
+              attachments: prev.attachments.filter((a) => a.id !== attachmentId),
             }
           : null
       );
     } catch (err) {
       setError(handleApiError(err));
     } finally {
-      setIsUploading(false);
-      e.target.value = '';
+      setDeletingAttachment(null);
     }
   };
+
+  // Dismiss upload notification
+  const handleDismissUpload = useCallback((uploadId: string) => {
+    setUploads((prev) => prev.filter((u) => u.id !== uploadId));
+  }, []);
 
   if (isLoading) {
     return (
@@ -360,66 +513,71 @@ export default function EditProjectPage() {
         {/* Attachments */}
         <Card>
           <CardHeader>
-            <CardTitle>Attachments</CardTitle>
+            <CardTitle>{text.attachments}</CardTitle>
           </CardHeader>
-          <CardContent>
-            {/* Upload */}
-            <div className="mb-4">
-              <label className="block">
-                <input
-                  type="file"
-                  onChange={handleFileUpload}
-                  disabled={isUploading}
-                  className="hidden"
+          <CardContent className="space-y-6">
+            {/* Existing Attachments */}
+            {project.attachments.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-brand-gray mb-3">
+                  {text.uploadedFiles}
+                </h4>
+                <FilePreview
+                  files={project.attachments.map((a) => ({
+                    id: a.id,
+                    file_url: a.file,
+                    original_filename: a.original_filename,
+                    file_size: a.file_size,
+                    file_type: a.file_type,
+                    created_at: a.created_at,
+                  }))}
+                  onDelete={handleDeleteAttachment}
+                  isDeleting={deletingAttachment}
+                  showDelete={true}
+                  showDownload={true}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="cursor-pointer"
-                  disabled={isUploading}
-                  onClick={() =>
-                    document.querySelector<HTMLInputElement>('input[type="file"]')?.click()
-                  }
-                >
-                  <Upload className="h-4 w-4 mr-2" />
-                  {isUploading ? 'Uploading...' : 'Upload File'}
-                </Button>
-              </label>
-              <p className="mt-1 text-xs text-gray-500">
-                Max file size: 10MB. Allowed: PDF, DOC, DOCX, XLS, XLSX, PNG, JPG
-              </p>
-            </div>
-
-            {/* Attachment List */}
-            {project.attachments.length > 0 ? (
-              <ul className="divide-y">
-                {project.attachments.map((attachment) => (
-                  <li
-                    key={attachment.id}
-                    className="flex items-center justify-between py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium">
-                        {attachment.original_filename}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {(attachment.file_size / 1024).toFixed(1)} KB
-                      </p>
-                    </div>
-                    <a
-                      href={attachment.file}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Download
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500 text-sm">No attachments yet</p>
+              </div>
             )}
+
+            {/* Add New Files */}
+            <div>
+              <h4 className="text-sm font-medium text-brand-gray mb-3">
+                {text.addNewFiles}
+              </h4>
+              <FileUpload
+                onFilesSelected={handleFilesSelected}
+                onFileRemove={handleFileRemove}
+                selectedFiles={selectedFiles}
+                multiple={true}
+                maxFiles={10}
+                showPreview={true}
+              />
+
+              {/* Upload button */}
+              {selectedFiles.length > 0 && (
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    onClick={handleUploadFiles}
+                    disabled={uploads.length > 0}
+                  >
+                    {isRTL
+                      ? `رفع ${selectedFiles.length} ملف`
+                      : `Upload ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''}`}
+                  </Button>
+                </div>
+              )}
+
+              {/* Upload Progress */}
+              {uploads.length > 0 && (
+                <div className="mt-4">
+                  <UploadProgress
+                    uploads={uploads}
+                    onDismiss={handleDismissUpload}
+                  />
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>

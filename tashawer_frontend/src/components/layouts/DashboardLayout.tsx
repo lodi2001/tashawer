@@ -34,6 +34,9 @@ import {
   ShoppingBag,
   AlertTriangle,
   Bell,
+  BarChart3,
+  CreditCard,
+  Building2,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -86,6 +89,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     ? [
         { name: t('dashboard'), href: '/admin', icon: Home },
         { name: t('users'), href: '/admin/users', icon: Users },
+        { name: t('analytics'), href: '/admin/analytics', icon: BarChart3 },
+        { name: t('withdrawals'), href: '/admin/withdrawals', icon: CreditCard },
+        { name: t('disputes'), href: '/admin/disputes', icon: AlertTriangle },
+        { name: t('bankAccounts'), href: '/admin/bank-accounts', icon: Building2 },
         { name: t('auditLogs'), href: '/admin/audit-logs', icon: FileText },
       ]
     : isClient

@@ -30,7 +30,7 @@ jobs:
           USER: ${{ secrets.STAGING_USER }}
           PATH_APP: ${{ secrets.STAGING_PATH }}
         run: |
-          ssh $USER@$HOST << 'ENDSSH'
+          ssh $USER@$HOST 'bash -s' << 'ENDSSH'
             set -e
             cd /var/www/tashawer
 
@@ -51,27 +51,25 @@ jobs:
             cd tashawer_frontend
 
             # Set staging environment variables
-            cat > .env.local << 'ENVEOF'
-# Server Configuration
-PORT=3001
-
-# API Configuration - Staging
-NEXT_PUBLIC_API_URL=http://68.183.142.4:8001/api/v1
-
-# App Configuration
-NEXT_PUBLIC_APP_NAME=Tashawer
-NEXT_PUBLIC_APP_NAME_AR=تشاور
-
-# Firebase Configuration
-NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyCx4ABeaxqUz93FYqsurg0aMBH75iHEg7o
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tashawer-22207.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=tashawer-22207
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tashawer-22207.firebasestorage.app
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=792696060280
-NEXT_PUBLIC_FIREBASE_APP_ID=1:792696060280:web:9bf61b065a19f25769f08d
-NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-NTW72992RC
-NEXT_PUBLIC_FIREBASE_VAPID_KEY=BPYZkz925ioax1CB6k5_8GXJs3gJgTOlO3luT8pYdna_Yp-lDaLOfiFvx8aYBSDDmj3l0rXd6L--CQDI3BtdQy4
-ENVEOF
+            echo "# Server Configuration" > .env.local
+            echo "PORT=3001" >> .env.local
+            echo "" >> .env.local
+            echo "# API Configuration - Staging" >> .env.local
+            echo "NEXT_PUBLIC_API_URL=http://68.183.142.4:8001/api/v1" >> .env.local
+            echo "" >> .env.local
+            echo "# App Configuration" >> .env.local
+            echo "NEXT_PUBLIC_APP_NAME=Tashawer" >> .env.local
+            echo "NEXT_PUBLIC_APP_NAME_AR=تشاور" >> .env.local
+            echo "" >> .env.local
+            echo "# Firebase Configuration" >> .env.local
+            echo "NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyCx4ABeaxqUz93FYqsurg0aMBH75iHEg7o" >> .env.local
+            echo "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=tashawer-22207.firebaseapp.com" >> .env.local
+            echo "NEXT_PUBLIC_FIREBASE_PROJECT_ID=tashawer-22207" >> .env.local
+            echo "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=tashawer-22207.firebasestorage.app" >> .env.local
+            echo "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=792696060280" >> .env.local
+            echo "NEXT_PUBLIC_FIREBASE_APP_ID=1:792696060280:web:9bf61b065a19f25769f08d" >> .env.local
+            echo "NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=G-NTW72992RC" >> .env.local
+            echo "NEXT_PUBLIC_FIREBASE_VAPID_KEY=BPYZkz925ioax1CB6k5_8GXJs3gJgTOlO3luT8pYdna_Yp-lDaLOfiFvx8aYBSDDmj3l0rXd6L--CQDI3BtdQy4" >> .env.local
 
             npm ci
             npm run build

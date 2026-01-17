@@ -1,0 +1,63 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.STAGING_SSH_KEY }}
+
+      - name: Add host to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.STAGING_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to Staging
+        env:
+          HOST: ${{ secrets.STAGING_HOST }}
+          USER: ${{ secrets.STAGING_USER }}
+          PATH_APP: ${{ secrets.STAGING_PATH }}
+        run: |
+          ssh $USER@$HOST << 'ENDSSH'
+            set -e
+            cd /var/www/tashawer
+
+            echo "=== Pulling latest code ==="
+            git fetch origin dev
+            git reset --hard origin/dev
+
+            echo "=== Backend Deployment ==="
+            cd tashawer_backend
+            source venv/bin/activate
+            pip install -r requirements/base.txt --quiet
+            python manage.py migrate --noinput
+            python manage.py collectstatic --noinput
+            deactivate
+            cd ..
+
+            echo "=== Frontend Deployment ==="
+            cd tashawer_frontend
+            npm ci --production
+            npm run build
+            cd ..
+
+            echo "=== Restarting Services ==="
+            sudo systemctl restart tashawer-backend
+            sudo systemctl restart tashawer-frontend
+
+            echo "=== Deployment Complete ==="
+            sudo systemctl status tashawer-backend --no-pager
+            sudo systemctl status tashawer-frontend --no-pager
+          ENDSSH

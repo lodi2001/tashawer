@@ -49,7 +49,7 @@ jobs:
 
             echo "=== Frontend Deployment ==="
             cd tashawer_frontend
-            npm ci --production
+            npm ci
             npm run build
             cd ..
 

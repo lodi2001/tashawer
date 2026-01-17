@@ -2,14 +2,18 @@
 Proposal generation service using Claude AI.
 """
 
+import json
 import logging
+import re
 from typing import Dict, Any, Optional
 from decimal import Decimal
 
 from .claude import ClaudeService
 from apps.ai.prompts.proposal import (
-    PROPOSAL_SYSTEM,
-    PROPOSAL_USER,
+    PROPOSAL_SYSTEM_AR,
+    PROPOSAL_SYSTEM_EN,
+    PROPOSAL_USER_AR,
+    PROPOSAL_USER_EN,
 )
 
 logger = logging.getLogger(__name__)
@@ -22,6 +26,41 @@ class ProposalGeneratorService:
 
     def __init__(self):
         self.claude = ClaudeService()
+
+    def _parse_json_response(self, content: str) -> Dict[str, Any]:
+        """
+        Parse JSON response from Claude, handling potential formatting issues.
+        """
+        try:
+            # Try direct JSON parsing first
+            return json.loads(content)
+        except json.JSONDecodeError:
+            pass
+
+        # Try to extract JSON from markdown code blocks
+        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(1))
+            except json.JSONDecodeError:
+                pass
+
+        # Try to find JSON object in the content
+        json_match = re.search(r'\{[^{}]*"cover_letter"[^{}]*\}', content, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(0))
+            except json.JSONDecodeError:
+                pass
+
+        # If all parsing fails, return the content as cover_letter
+        logger.warning("Failed to parse JSON response, using raw content as cover_letter")
+        return {
+            'cover_letter': content,
+            'estimated_duration_days': None,
+            'estimated_amount': None,
+            'estimation_reasoning': None
+        }
 
     def generate_proposal(
         self,
@@ -45,65 +84,87 @@ class ProposalGeneratorService:
             consultant_name: Name of the consultant
             consultant_bio: Optional consultant biography
             consultant_experience: Optional relevant experience
-            proposed_amount: Proposed price
+            proposed_amount: Proposed price (used as hint if provided)
             currency: Currency code
-            duration: Proposed duration
+            duration: Proposed duration (used as hint if provided)
             additional_notes: Any additional notes
             language: Target language (ar/en)
 
         Returns:
-            Dict with 'success', 'proposal', 'tokens_used', 'processing_time_ms', 'error'
+            Dict with 'success', 'proposal', 'estimated_duration_days',
+            'estimated_amount', 'estimation_reasoning', 'tokens_used',
+            'processing_time_ms', 'error'
         """
         if not self.claude.is_available():
             return {
                 'success': False,
                 'proposal': None,
+                'estimated_duration_days': None,
+                'estimated_amount': None,
+                'estimation_reasoning': None,
                 'tokens_used': 0,
                 'processing_time_ms': 0,
                 'error': 'AI service is not available.'
             }
 
-        # Build project details
-        project_details = f"""
-عنوان المشروع / Project Title: {project_title}
+        # Select prompts based on language
+        if language == 'ar':
+            system_prompt = PROPOSAL_SYSTEM_AR
+            user_template = PROPOSAL_USER_AR
+        else:
+            system_prompt = PROPOSAL_SYSTEM_EN
+            user_template = PROPOSAL_USER_EN
 
-نطاق العمل / Scope of Work:
-{project_scope}
-"""
-
-        # Build consultant details
-        consultant_parts = [f"الاسم / Name: {consultant_name}"]
+        # Build consultant bio section
+        bio_text = ""
         if consultant_bio:
-            consultant_parts.append(f"نبذة / Bio: {consultant_bio}")
+            bio_text = f"Bio: {consultant_bio}" if language == 'en' else f"نبذة: {consultant_bio}"
+
+        # Build experience section
+        experience_text = ""
         if consultant_experience:
-            consultant_parts.append(f"الخبرات ذات الصلة / Relevant Experience:\n{consultant_experience}")
+            experience_text = f"Relevant Experience:\n{consultant_experience}" if language == 'en' else f"الخبرات ذات الصلة:\n{consultant_experience}"
 
-        consultant_details = "\n".join(consultant_parts)
+        # Build additional context
+        additional_context_parts = []
+        if proposed_amount:
+            hint = f"Client's budget hint: {proposed_amount} {currency}" if language == 'en' else f"تلميح ميزانية العميل: {proposed_amount} {currency}"
+            additional_context_parts.append(hint)
+        if duration:
+            hint = f"Duration hint from consultant: {duration}" if language == 'en' else f"تلميح المدة من المستشار: {duration}"
+            additional_context_parts.append(hint)
+        if additional_notes:
+            note = f"Additional Notes: {additional_notes}" if language == 'en' else f"ملاحظات إضافية: {additional_notes}"
+            additional_context_parts.append(note)
 
-        # Format amount
-        amount_str = str(proposed_amount) if proposed_amount else "يحدد لاحقاً / To be determined"
-        duration_str = duration if duration else "يحدد لاحقاً / To be determined"
+        additional_context = "\n".join(additional_context_parts) if additional_context_parts else ""
 
-        user_prompt = PROPOSAL_USER.format(
-            project_details=project_details,
-            consultant_details=consultant_details,
-            proposed_amount=amount_str,
-            currency=currency,
-            duration=duration_str,
-            additional_notes=additional_notes or "لا يوجد / None"
+        user_prompt = user_template.format(
+            project_title=project_title,
+            project_scope=project_scope,
+            consultant_name=consultant_name,
+            consultant_bio=bio_text,
+            consultant_experience=experience_text,
+            additional_context=additional_context,
         )
 
         result = self.claude.generate(
             prompt=user_prompt,
-            system_prompt=PROPOSAL_SYSTEM,
+            system_prompt=system_prompt,
             temperature=0.7,
-            max_tokens=6000
+            max_tokens=4000
         )
 
         if result['success']:
+            # Parse the JSON response
+            parsed = self._parse_json_response(result['content'])
+
             return {
                 'success': True,
-                'proposal': result['content'],
+                'proposal': parsed.get('cover_letter', result['content']),
+                'estimated_duration_days': parsed.get('estimated_duration_days'),
+                'estimated_amount': parsed.get('estimated_amount'),
+                'estimation_reasoning': parsed.get('estimation_reasoning'),
                 'tokens_used': result['tokens_used'],
                 'processing_time_ms': result['processing_time_ms'],
                 'error': None
@@ -112,6 +173,9 @@ class ProposalGeneratorService:
             return {
                 'success': False,
                 'proposal': None,
+                'estimated_duration_days': None,
+                'estimated_amount': None,
+                'estimation_reasoning': None,
                 'tokens_used': result['tokens_used'],
                 'processing_time_ms': result['processing_time_ms'],
                 'error': result['error']
@@ -154,7 +218,7 @@ class ProposalGeneratorService:
 
         return self.generate_proposal(
             project_title=project.title,
-            project_scope=project.scope or project.description or "",
+            project_scope=project.description or "",
             consultant_name=consultant.get_full_name(),
             consultant_bio=consultant_bio,
             consultant_experience=experience_text,

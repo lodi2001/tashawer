@@ -290,7 +290,7 @@ class ProposalGenerateView(APIView, AIServiceMixin):
         if serializer.validated_data.get('project_id'):
             project = get_object_or_404(Project, pk=serializer.validated_data['project_id'])
             project_title = project.title
-            project_scope = project.scope or project.description or ''
+            project_scope = project.description or ''
 
         service = ProposalGeneratorService()
         result = service.generate_proposal(
@@ -318,6 +318,9 @@ class ProposalGenerateView(APIView, AIServiceMixin):
                 'success': True,
                 'data': {
                     'proposal': result['proposal'],
+                    'estimated_duration_days': result.get('estimated_duration_days'),
+                    'estimated_amount': result.get('estimated_amount'),
+                    'estimation_reasoning': result.get('estimation_reasoning'),
                     'tokens_used': result['tokens_used'],
                     'processing_time_ms': result['processing_time_ms'],
                 }

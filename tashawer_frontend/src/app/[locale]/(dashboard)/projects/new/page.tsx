@@ -22,8 +22,9 @@ import { createProject, getCategories, uploadAttachment } from '@/lib/projects';
 import { handleApiError } from '@/lib/api';
 import { createPreviewUrl, revokePreviewUrl } from '@/lib/fileValidation';
 import type { Category, ProjectCreateData } from '@/types';
-import { ArrowLeft, Save, Send } from 'lucide-react';
+import { ArrowLeft, Save, Send, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { ScopeGenerator } from '@/components/ai/ScopeGenerator';
 
 interface FormErrors {
   title?: string;
@@ -50,6 +51,9 @@ export default function CreateProjectPage() {
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [uploads, setUploads] = useState<UploadItem[]>([]);
 
+  // AI Scope Generator state
+  const [showAIScope, setShowAIScope] = useState(false);
+
   // Translations
   const t = {
     en: {
@@ -73,6 +77,7 @@ export default function CreateProjectPage() {
       publishProject: 'Publish Project',
       minChars: 'minimum characters',
       uploadingFiles: 'Uploading attachments...',
+      aiGenerateScope: 'AI Generate Scope',
     },
     ar: {
       createProject: 'إنشاء مشروع',
@@ -95,6 +100,7 @@ export default function CreateProjectPage() {
       publishProject: 'نشر المشروع',
       minChars: 'الحد الأدنى من الأحرف',
       uploadingFiles: 'جاري رفع المرفقات...',
+      aiGenerateScope: 'توليد النطاق بالذكاء الاصطناعي',
     },
   };
 
@@ -208,6 +214,12 @@ export default function CreateProjectPage() {
   const handleDismissUpload = useCallback((uploadId: string) => {
     setUploads((prev) => prev.filter((u) => u.id !== uploadId));
   }, []);
+
+  // Handle AI-generated scope
+  const handleScopeGenerated = (scope: string) => {
+    handleChange('description', scope);
+    setShowAIScope(false);
+  };
 
   const handleSubmit = async (publish: boolean) => {
     if (!validateForm()) return;
@@ -349,9 +361,36 @@ export default function CreateProjectPage() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description <span className="text-red-500">*</span>
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAIScope(!showAIScope)}
+                  >
+                    <Sparkles className={`h-4 w-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+                    {text.aiGenerateScope}
+                  </Button>
+                </div>
+
+                {/* AI Scope Generator */}
+                {showAIScope && (
+                  <Card className="mb-3">
+                    <CardContent className="pt-4">
+                      <ScopeGenerator
+                        initialDescription={formData.description}
+                        onScopeGenerated={handleScopeGenerated}
+                        onClose={() => setShowAIScope(false)}
+                        language={isRTL ? 'ar' : 'en'}
+                        category={formData.category_id}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+
                 <textarea
                   className={`flex min-h-[150px] w-full rounded-md border bg-background px-3 py-2 text-sm ${
                     errors.description ? 'border-red-500' : 'border-input'

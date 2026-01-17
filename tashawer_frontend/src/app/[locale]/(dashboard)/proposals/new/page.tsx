@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import {
@@ -19,7 +20,8 @@ import { getProject } from '@/lib/projects';
 import { createProposal } from '@/lib/proposals';
 import { handleApiError } from '@/lib/api';
 import type { ProjectDetail, ProposalCreateData } from '@/types';
-import { ArrowLeft, Send, DollarSign, Calendar, MapPin } from 'lucide-react';
+import { ArrowLeft, Send, DollarSign, Calendar, MapPin, FileText } from 'lucide-react';
+import { ProposalGenerator } from '@/components/ai/ProposalGenerator';
 
 interface FormErrors {
   cover_letter?: string;
@@ -31,6 +33,7 @@ interface FormErrors {
 function SubmitProposalForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const locale = useLocale();
   const projectId = searchParams.get('project');
 
   const [project, setProject] = useState<ProjectDetail | null>(null);
@@ -38,6 +41,7 @@ function SubmitProposalForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [showAIProposal, setShowAIProposal] = useState(false);
 
   const [formData, setFormData] = useState<Omit<ProposalCreateData, 'project_id'>>({
     cover_letter: '',
@@ -113,6 +117,28 @@ function SubmitProposalForm() {
     if (errors[field as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
+  };
+
+  // Handle AI-generated proposal
+  const handleProposalGenerated = (
+    proposal: string,
+    estimates?: {
+      estimated_duration_days: number | null;
+      estimated_amount: number | null;
+      estimation_reasoning: string | null;
+    }
+  ) => {
+    handleChange('cover_letter', proposal);
+
+    // Auto-fill estimated values if provided by AI
+    if (estimates?.estimated_duration_days) {
+      handleChange('estimated_duration', estimates.estimated_duration_days);
+    }
+    if (estimates?.estimated_amount) {
+      handleChange('proposed_amount', estimates.estimated_amount);
+    }
+
+    setShowAIProposal(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -221,9 +247,39 @@ function SubmitProposalForm() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Cover Letter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Cover Letter <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-sm font-medium text-gray-700">
+                  Cover Letter <span className="text-red-500">*</span>
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAIProposal(!showAIProposal)}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  AI Generate Proposal
+                </Button>
+              </div>
+
+              {/* AI Proposal Generator */}
+              {showAIProposal && project && (
+                <Card className="mb-3">
+                  <CardContent className="pt-4">
+                    <ProposalGenerator
+                      projectId={project.id}
+                      projectTitle={project.title}
+                      projectScope={project.description}
+                      proposedAmount={formData.proposed_amount}
+                      duration={formData.estimated_duration ? `${formData.estimated_duration} days` : ''}
+                      onProposalGenerated={handleProposalGenerated}
+                      onClose={() => setShowAIProposal(false)}
+                      language={locale === 'ar' ? 'ar' : 'en'}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
               <textarea
                 className={`flex min-h-[200px] w-full rounded-md border bg-background px-3 py-2 text-sm ${
                   errors.cover_letter ? 'border-red-500' : 'border-input'

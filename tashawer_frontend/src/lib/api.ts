@@ -96,8 +96,35 @@ export default api;
 // API helper functions
 export const handleApiError = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError<{ error?: { message?: string } }>;
-    return axiosError.response?.data?.error?.message || axiosError.message || 'An error occurred';
+    const axiosError = error as AxiosError<{
+      error?: { message?: string };
+      message?: string;
+      errors?: Record<string, string[]>;
+    }>;
+    const data = axiosError.response?.data;
+
+    // Check for validation errors with field-specific messages
+    if (data?.errors) {
+      const errorMessages = Object.entries(data.errors)
+        .map(([field, messages]) => {
+          const fieldName = field.replace(/_/g, ' ');
+          return messages.map(msg => `${msg}`).join(', ');
+        })
+        .join('. ');
+      return errorMessages || 'Validation error';
+    }
+
+    // Check for error object with message
+    if (data?.error?.message) {
+      return data.error.message;
+    }
+
+    // Check for direct message
+    if (data?.message) {
+      return data.message;
+    }
+
+    return axiosError.message || 'An error occurred';
   }
   return 'An unexpected error occurred';
 };

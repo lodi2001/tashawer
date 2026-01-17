@@ -106,11 +106,20 @@ export async function generateDeliverables(data: DeliverablesGenerateRequest): P
   return response.data.data;
 }
 
+export interface ProposalGenerateResult {
+  proposal: string;
+  estimated_duration_days: number | null;
+  estimated_amount: number | null;
+  estimation_reasoning: string | null;
+  tokens_used: number;
+  processing_time_ms: number;
+}
+
 /**
  * Generate proposal
  */
-export async function generateProposal(data: ProposalGenerateRequest): Promise<{ proposal: string; tokens_used: number; processing_time_ms: number }> {
-  const response = await api.post<{ success: boolean; data: { proposal: string; tokens_used: number; processing_time_ms: number } }>(
+export async function generateProposal(data: ProposalGenerateRequest): Promise<ProposalGenerateResult> {
+  const response = await api.post<{ success: boolean; data: ProposalGenerateResult }>(
     '/ai/proposal/generate/',
     data
   );

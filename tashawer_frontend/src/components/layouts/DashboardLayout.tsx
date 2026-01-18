@@ -94,6 +94,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         { name: t('disputes'), href: '/admin/disputes', icon: AlertTriangle },
         { name: t('bankAccounts'), href: '/admin/bank-accounts', icon: Building2 },
         { name: t('auditLogs'), href: '/admin/audit-logs', icon: FileText },
+        { name: t('settings'), href: '/admin/settings', icon: Settings },
       ]
     : isClient
     ? [

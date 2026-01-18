@@ -41,8 +41,12 @@ jobs:
             echo "=== Backend Deployment ==="
             cd tashawer_backend
 
-            # Set staging environment - disable SSL redirect
-            echo "DJANGO_SETTINGS_MODULE=config.settings.staging" > .env
+            # Update DJANGO_SETTINGS_MODULE in .env without overwriting other variables
+            if grep -q "DJANGO_SETTINGS_MODULE" .env 2>/dev/null; then
+              sed -i 's/DJANGO_SETTINGS_MODULE=.*/DJANGO_SETTINGS_MODULE=config.settings.staging/' .env
+            else
+              echo "DJANGO_SETTINGS_MODULE=config.settings.staging" >> .env
+            fi
 
             source venv/bin/activate
             export DJANGO_SETTINGS_MODULE=config.settings.staging

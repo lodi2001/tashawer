@@ -47,6 +47,7 @@ export default function AdminSettingsPage() {
   // Form state
   const [anthropicKey, setAnthropicKey] = useState('');
   const [showAnthropicKey, setShowAnthropicKey] = useState(false);
+  const [claudeModel, setClaudeModel] = useState('claude-sonnet-4-5-20250929');
   const [aiEnabled, setAiEnabled] = useState(true);
   const [dailyLimit, setDailyLimit] = useState(10);
   const [monthlyLimit, setMonthlyLimit] = useState(100);
@@ -73,6 +74,7 @@ export default function AdminSettingsPage() {
 
       // Populate form with current values
       setAiEnabled(data.ai_settings.ai_enabled);
+      setClaudeModel(data.ai_settings.claude_model);
       setDailyLimit(data.ai_settings.ai_daily_limit_per_user);
       setMonthlyLimit(data.ai_settings.ai_monthly_limit_per_user);
       setTapPublicKey(data.payment_settings.tap_public_key);
@@ -93,6 +95,7 @@ export default function AdminSettingsPage() {
 
       const updateData: Record<string, unknown> = {
         ai_enabled: aiEnabled,
+        claude_model: claudeModel,
         ai_daily_limit_per_user: dailyLimit,
         ai_monthly_limit_per_user: monthlyLimit,
       };
@@ -273,6 +276,25 @@ export default function AdminSettingsPage() {
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Get your API key from <a href="https://console.anthropic.com/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">console.anthropic.com</a>
+                </p>
+              </div>
+
+              {/* Claude Model Selection */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Claude Model</label>
+                <select
+                  value={claudeModel}
+                  onChange={(e) => setClaudeModel(e.target.value)}
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  {settings?.ai_settings.claude_model_choices?.map((choice) => (
+                    <option key={choice.value} value={choice.value}>
+                      {choice.label}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Select the AI model for generating content. Opus is most intelligent, Haiku is fastest.
                 </p>
               </div>
 

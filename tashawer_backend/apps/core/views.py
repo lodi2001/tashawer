@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import PlatformSettings
+from .models import PlatformSettings, CLAUDE_MODEL_CHOICES
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,11 @@ class PlatformSettingsView(APIView):
             'data': {
                 'ai_settings': {
                     'anthropic_api_key_set': bool(settings_obj.get_anthropic_api_key()),
+                    'claude_model': settings_obj.claude_model,
+                    'claude_model_choices': [
+                        {'value': value, 'label': label}
+                        for value, label in CLAUDE_MODEL_CHOICES
+                    ],
                     'ai_enabled': settings_obj.ai_enabled,
                     'ai_daily_limit_per_user': settings_obj.ai_daily_limit_per_user,
                     'ai_monthly_limit_per_user': settings_obj.ai_monthly_limit_per_user,
@@ -58,6 +63,12 @@ class PlatformSettingsView(APIView):
                 settings_obj.set_anthropic_api_key(api_key)
             elif api_key == '':  # Explicitly clear if empty string
                 settings_obj.set_anthropic_api_key('')
+
+        if 'claude_model' in data:
+            # Validate the model is in the allowed choices
+            valid_models = [choice[0] for choice in CLAUDE_MODEL_CHOICES]
+            if data['claude_model'] in valid_models:
+                settings_obj.claude_model = data['claude_model']
 
         if 'ai_enabled' in data:
             settings_obj.ai_enabled = bool(data['ai_enabled'])
@@ -105,6 +116,11 @@ class PlatformSettingsView(APIView):
             'data': {
                 'ai_settings': {
                     'anthropic_api_key_set': bool(settings_obj.get_anthropic_api_key()),
+                    'claude_model': settings_obj.claude_model,
+                    'claude_model_choices': [
+                        {'value': value, 'label': label}
+                        for value, label in CLAUDE_MODEL_CHOICES
+                    ],
                     'ai_enabled': settings_obj.ai_enabled,
                     'ai_daily_limit_per_user': settings_obj.ai_daily_limit_per_user,
                     'ai_monthly_limit_per_user': settings_obj.ai_monthly_limit_per_user,

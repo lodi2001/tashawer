@@ -22,12 +22,22 @@ class ClaudeService:
     Reads API key from PlatformSettings (admin-configurable).
     """
 
-    DEFAULT_MODEL = "claude-sonnet-4-20250514"
+    DEFAULT_MODEL = "claude-sonnet-4-5-20250929"
     MAX_TOKENS = 4096
 
     def __init__(self):
         self.client = None
         self._initialize_client()
+
+    @classmethod
+    def get_configured_model(cls) -> str:
+        """Get the configured Claude model from platform settings."""
+        try:
+            from apps.core.models import PlatformSettings
+            settings = PlatformSettings.get_settings()
+            return settings.claude_model or cls.DEFAULT_MODEL
+        except Exception:
+            return cls.DEFAULT_MODEL
 
     def _initialize_client(self):
         """Initialize or reinitialize the Anthropic client."""
@@ -76,7 +86,7 @@ class ClaudeService:
         Args:
             prompt: The user prompt
             system_prompt: Optional system prompt
-            model: Model to use (defaults to claude-sonnet-4-20250514)
+            model: Model to use (defaults to configured model from settings)
             max_tokens: Maximum tokens in response
             temperature: Temperature for generation (0-1)
 
@@ -97,8 +107,11 @@ class ClaudeService:
         try:
             messages = [{"role": "user", "content": prompt}]
 
+            # Use provided model, or get configured model from settings
+            selected_model = model or self.get_configured_model()
+
             kwargs = {
-                "model": model or self.DEFAULT_MODEL,
+                "model": selected_model,
                 "max_tokens": max_tokens or self.MAX_TOKENS,
                 "messages": messages,
             }

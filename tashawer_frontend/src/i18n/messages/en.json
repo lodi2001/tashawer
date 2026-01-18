@@ -265,6 +265,19 @@
     "created": "Created successfully",
     "updated": "Updated successfully"
   },
+  "admin": {
+    "settings": {
+      "claudeModel": "Claude Model",
+      "claudeModelDescription": "Select the AI model for generating content. Opus is most intelligent, Haiku is fastest.",
+      "selectModel": "Select a model",
+      "modelOpus45": "Claude Opus 4.5 - Premium (Most Intelligent)",
+      "modelSonnet45": "Claude Sonnet 4.5 - Smart (Best Balance)",
+      "modelHaiku45": "Claude Haiku 4.5 - Fast (Most Efficient)",
+      "modelOpus41": "Claude Opus 4.1 (Legacy)",
+      "modelSonnet4": "Claude Sonnet 4 (Legacy)",
+      "modelOpus4": "Claude Opus 4 (Legacy)"
+    }
+  },
   "landing": {
     "heroTitle": "Engineering Consultation",
     "heroTitleHighlight": "Made Simple",

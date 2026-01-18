@@ -2,8 +2,15 @@ import api from './api';
 
 // ============ Types ============
 
+export interface ClaudeModelChoice {
+  value: string;
+  label: string;
+}
+
 export interface AISettings {
   anthropic_api_key_set: boolean;
+  claude_model: string;
+  claude_model_choices: ClaudeModelChoice[];
   ai_enabled: boolean;
   ai_daily_limit_per_user: number;
   ai_monthly_limit_per_user: number;
@@ -30,6 +37,7 @@ export interface PlatformSettings {
 export interface UpdateSettingsRequest {
   // AI Settings
   anthropic_api_key?: string;
+  claude_model?: string;
   ai_enabled?: boolean;
   ai_daily_limit_per_user?: number;
   ai_monthly_limit_per_user?: number;

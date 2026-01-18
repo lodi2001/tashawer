@@ -73,6 +73,18 @@ class SoftDeleteModel(BaseModel):
         abstract = True
 
 
+CLAUDE_MODEL_CHOICES = [
+    # Latest 4.5 Series (Recommended)
+    ('claude-opus-4-5-20251101', 'Claude Opus 4.5 - Premium (Most Intelligent)'),
+    ('claude-sonnet-4-5-20250929', 'Claude Sonnet 4.5 - Smart (Best Balance)'),
+    ('claude-haiku-4-5-20251001', 'Claude Haiku 4.5 - Fast (Most Efficient)'),
+    # Legacy Models
+    ('claude-opus-4-1-20250805', 'Claude Opus 4.1 (Legacy)'),
+    ('claude-sonnet-4-20250514', 'Claude Sonnet 4 (Legacy)'),
+    ('claude-opus-4-20250514', 'Claude Opus 4 (Legacy)'),
+]
+
+
 class PlatformSettings(models.Model):
     """
     Singleton model for platform-wide settings.
@@ -90,6 +102,12 @@ class PlatformSettings(models.Model):
         blank=True,
         default='',
         help_text="Encrypted Anthropic API key for Claude AI"
+    )
+    claude_model = models.CharField(
+        max_length=50,
+        choices=CLAUDE_MODEL_CHOICES,
+        default='claude-sonnet-4-5-20250929',
+        help_text='Claude model to use for AI features'
     )
     ai_enabled = models.BooleanField(
         default=True,

@@ -265,6 +265,19 @@
     "created": "تم الإنشاء بنجاح",
     "updated": "تم التحديث بنجاح"
   },
+  "admin": {
+    "settings": {
+      "claudeModel": "نموذج Claude",
+      "claudeModelDescription": "اختر نموذج الذكاء الاصطناعي لإنشاء المحتوى. Opus هو الأكثر ذكاءً، Haiku هو الأسرع.",
+      "selectModel": "اختر نموذجاً",
+      "modelOpus45": "Claude Opus 4.5 - ممتاز (الأكثر ذكاءً)",
+      "modelSonnet45": "Claude Sonnet 4.5 - ذكي (أفضل توازن)",
+      "modelHaiku45": "Claude Haiku 4.5 - سريع (الأكثر كفاءة)",
+      "modelOpus41": "Claude Opus 4.1 (قديم)",
+      "modelSonnet4": "Claude Sonnet 4 (قديم)",
+      "modelOpus4": "Claude Opus 4 (قديم)"
+    }
+  },
   "landing": {
     "heroTitle": "الاستشارات الهندسية",
     "heroTitleHighlight": "بكل سهولة",

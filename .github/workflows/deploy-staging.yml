@@ -40,12 +40,21 @@ jobs:
 
             echo "=== Backend Deployment ==="
             cd tashawer_backend
+
+            # Set staging environment - disable SSL redirect
+            echo "DJANGO_SETTINGS_MODULE=config.settings.staging" > .env
+
             source venv/bin/activate
+            export DJANGO_SETTINGS_MODULE=config.settings.staging
             pip install -r requirements/base.txt --quiet
             python manage.py migrate --noinput
             python manage.py collectstatic --noinput
             deactivate
             cd ..
+
+            # Update systemd service to use staging settings
+            sudo sed -i 's/config.settings.production/config.settings.staging/g' /etc/systemd/system/tashawer-backend.service 2>/dev/null || true
+            sudo systemctl daemon-reload
 
             echo "=== Frontend Deployment ==="
             cd tashawer_frontend

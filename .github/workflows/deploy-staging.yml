@@ -54,8 +54,8 @@ jobs:
             echo "# Server Configuration" > .env.local
             echo "PORT=3001" >> .env.local
             echo "" >> .env.local
-            echo "# API Configuration - Staging" >> .env.local
-            echo "NEXT_PUBLIC_API_URL=http://68.183.142.4/api/v1" >> .env.local
+            echo "# API Configuration - Staging (relative URL for protocol-agnostic requests)" >> .env.local
+            echo "NEXT_PUBLIC_API_URL=/api/v1" >> .env.local
             echo "" >> .env.local
             echo "# App Configuration" >> .env.local
             echo "NEXT_PUBLIC_APP_NAME=Tashawer" >> .env.local

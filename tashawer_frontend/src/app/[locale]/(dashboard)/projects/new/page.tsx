@@ -24,7 +24,7 @@ import { createPreviewUrl, revokePreviewUrl } from '@/lib/fileValidation';
 import type { Category, ProjectCreateData } from '@/types';
 import { ArrowLeft, Save, Send, Sparkles } from 'lucide-react';
 import Link from 'next/link';
-import { ScopeGenerator } from '@/components/ai/ScopeGenerator';
+import { ScopeGenerator, GeneratedScopeData } from '@/components/ai/ScopeGenerator';
 
 interface FormErrors {
   title?: string;
@@ -215,9 +215,31 @@ export default function CreateProjectPage() {
     setUploads((prev) => prev.filter((u) => u.id !== uploadId));
   }, []);
 
-  // Handle AI-generated scope
-  const handleScopeGenerated = (scope: string) => {
-    handleChange('description', scope);
+  // Handle AI-generated scope with structured data
+  const handleScopeGenerated = (data: GeneratedScopeData) => {
+    // Set description/scope
+    handleChange('description', data.scope);
+
+    // Set title if provided and current title is empty
+    if (data.title && !formData.title) {
+      handleChange('title', data.title);
+    }
+
+    // Set budget estimates if provided and current values are empty/zero
+    if (data.budget_min && formData.budget_min === 0) {
+      handleChange('budget_min', data.budget_min);
+    }
+    if (data.budget_max && formData.budget_max === 0) {
+      handleChange('budget_max', data.budget_max);
+    }
+
+    // Calculate deadline from estimated duration if provided and deadline is empty
+    if (data.estimated_duration_days && !formData.deadline) {
+      const deadline = new Date();
+      deadline.setDate(deadline.getDate() + data.estimated_duration_days);
+      handleChange('deadline', deadline.toISOString().split('T')[0]);
+    }
+
     setShowAIScope(false);
   };
 

@@ -9,7 +9,7 @@ import {
   AlertDescription,
   Spinner,
 } from '@/components/ui';
-import { generateScope, refineScope, generateDeliverables, getUsageStats, type UsageStats } from '@/lib/ai';
+import { generateScope, refineScope, generateDeliverables, getUsageStats, type UsageStats, type ScopeGenerateResult } from '@/lib/ai';
 import { handleApiError } from '@/lib/api';
 import {
   Sparkles,
@@ -24,9 +24,18 @@ import {
   Info,
 } from 'lucide-react';
 
+export interface GeneratedScopeData {
+  title: string | null;
+  description: string | null;
+  scope: string;
+  budget_min: number | null;
+  budget_max: number | null;
+  estimated_duration_days: number | null;
+}
+
 interface ScopeGeneratorProps {
   initialDescription?: string;
-  onScopeGenerated?: (scope: string) => void;
+  onScopeGenerated?: (data: GeneratedScopeData) => void;
   onClose?: () => void;
   language?: 'ar' | 'en';
   category?: string;
@@ -41,6 +50,7 @@ export function ScopeGenerator({
 }: ScopeGeneratorProps) {
   const [description, setDescription] = useState(initialDescription);
   const [generatedScope, setGeneratedScope] = useState('');
+  const [generatedResult, setGeneratedResult] = useState<ScopeGenerateResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRefining, setIsRefining] = useState(false);
   const [isGeneratingDeliverables, setIsGeneratingDeliverables] = useState(false);
@@ -66,6 +76,7 @@ export function ScopeGenerator({
         category,
       });
       setGeneratedScope(result.scope);
+      setGeneratedResult(result);
 
       // Refresh usage stats
       const stats = await getUsageStats();
@@ -133,7 +144,14 @@ export function ScopeGenerator({
 
   const handleUseScope = () => {
     if (onScopeGenerated && generatedScope) {
-      onScopeGenerated(generatedScope);
+      onScopeGenerated({
+        title: generatedResult?.title || null,
+        description: generatedResult?.description || null,
+        scope: generatedScope,
+        budget_min: generatedResult?.budget_min || null,
+        budget_max: generatedResult?.budget_max || null,
+        estimated_duration_days: generatedResult?.estimated_duration_days || null,
+      });
     }
   };
 
@@ -242,9 +260,59 @@ export function ScopeGenerator({
       {/* Generated Scope */}
       {generatedScope && (
         <div className="space-y-4">
+          {/* AI Suggestions Cards */}
+          {generatedResult && (generatedResult.title || generatedResult.budget_min || generatedResult.estimated_duration_days) && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {generatedResult.title && (
+                <div className="p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+                  <p className="text-xs text-blue-600 dark:text-blue-400 mb-1">
+                    {language === 'ar' ? 'العنوان المقترح' : 'Suggested Title'}
+                  </p>
+                  <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    {generatedResult.title}
+                  </p>
+                </div>
+              )}
+              {(generatedResult.budget_min || generatedResult.budget_max) && (
+                <div className="p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+                  <p className="text-xs text-green-600 dark:text-green-400 mb-1">
+                    {language === 'ar' ? 'الميزانية المقدرة' : 'Estimated Budget'}
+                  </p>
+                  <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                    {generatedResult.budget_min?.toLocaleString()} - {generatedResult.budget_max?.toLocaleString()} SAR
+                  </p>
+                </div>
+              )}
+              {generatedResult.estimated_duration_days && (
+                <div className="p-3 bg-purple-50 dark:bg-purple-950 border border-purple-200 dark:border-purple-800 rounded-lg">
+                  <p className="text-xs text-purple-600 dark:text-purple-400 mb-1">
+                    {language === 'ar' ? 'المدة المتوقعة' : 'Estimated Duration'}
+                  </p>
+                  <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                    {generatedResult.estimated_duration_days} {language === 'ar' ? 'يوم' : 'days'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Budget Reasoning */}
+          {generatedResult?.budget_reasoning && (
+            <div className="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg">
+              <p className="text-xs text-amber-600 dark:text-amber-400 mb-1">
+                {language === 'ar' ? 'تبرير التقدير' : 'Estimation Reasoning'}
+              </p>
+              <p className="text-sm text-amber-900 dark:text-amber-100">
+                {generatedResult.budget_reasoning}
+              </p>
+            </div>
+          )}
+
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-sm font-medium">Generated Scope</label>
+              <label className="block text-sm font-medium">
+                {language === 'ar' ? 'نطاق العمل' : 'Generated Scope'}
+              </label>
               <Button variant="ghost" size="sm" onClick={handleCopy}>
                 {copied ? (
                   <>
@@ -310,6 +378,7 @@ export function ScopeGenerator({
               size="sm"
               onClick={() => {
                 setGeneratedScope('');
+                setGeneratedResult(null);
                 setDeliverables('');
                 setShowDeliverables(false);
               }}

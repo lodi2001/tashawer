@@ -2,7 +2,9 @@
 Scope generation service using Claude AI.
 """
 
+import json
 import logging
+import re
 from typing import Dict, Any, Optional
 from django.utils import timezone
 
@@ -29,6 +31,52 @@ class ScopeGeneratorService:
     def __init__(self):
         self.claude = ClaudeService()
 
+    def _parse_json_response(self, content: str) -> Dict[str, Any]:
+        """
+        Parse JSON response from Claude, handling potential formatting issues.
+        """
+        try:
+            # Try direct JSON parsing first
+            return json.loads(content)
+        except json.JSONDecodeError:
+            pass
+
+        # Try to extract JSON from markdown code blocks
+        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(1))
+            except json.JSONDecodeError:
+                pass
+
+        # Try to find JSON object in the content
+        json_match = re.search(r'\{[^{}]*"title"[^{}]*\}', content, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(0))
+            except json.JSONDecodeError:
+                pass
+
+        # Try to find a larger JSON object with nested content
+        json_match = re.search(r'\{.*"scope".*\}', content, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group(0))
+            except json.JSONDecodeError:
+                pass
+
+        # If all parsing fails, return the content as scope (backward compatibility)
+        logger.warning("Failed to parse JSON response, using raw content as scope")
+        return {
+            'title': None,
+            'description': None,
+            'scope': content,
+            'budget_min': None,
+            'budget_max': None,
+            'estimated_duration_days': None,
+            'budget_reasoning': None
+        }
+
     def generate_scope(
         self,
         description: str,
@@ -46,12 +94,20 @@ class ScopeGeneratorService:
             budget_range: Optional budget range for context
 
         Returns:
-            Dict with 'success', 'scope', 'tokens_used', 'processing_time_ms', 'error'
+            Dict with 'success', 'title', 'description', 'scope', 'budget_min',
+            'budget_max', 'estimated_duration_days', 'budget_reasoning',
+            'tokens_used', 'processing_time_ms', 'error'
         """
         if not self.claude.is_available():
             return {
                 'success': False,
+                'title': None,
+                'description': None,
                 'scope': None,
+                'budget_min': None,
+                'budget_max': None,
+                'estimated_duration_days': None,
+                'budget_reasoning': None,
                 'tokens_used': 0,
                 'processing_time_ms': 0,
                 'error': 'AI service is not available.'
@@ -80,9 +136,18 @@ class ScopeGeneratorService:
         )
 
         if result['success']:
+            # Parse the JSON response
+            parsed = self._parse_json_response(result['content'])
+
             return {
                 'success': True,
-                'scope': result['content'],
+                'title': parsed.get('title'),
+                'description': parsed.get('description'),
+                'scope': parsed.get('scope', result['content']),
+                'budget_min': parsed.get('budget_min'),
+                'budget_max': parsed.get('budget_max'),
+                'estimated_duration_days': parsed.get('estimated_duration_days'),
+                'budget_reasoning': parsed.get('budget_reasoning'),
                 'tokens_used': result['tokens_used'],
                 'processing_time_ms': result['processing_time_ms'],
                 'error': None
@@ -90,7 +155,13 @@ class ScopeGeneratorService:
         else:
             return {
                 'success': False,
+                'title': None,
+                'description': None,
                 'scope': None,
+                'budget_min': None,
+                'budget_max': None,
+                'estimated_duration_days': None,
+                'budget_reasoning': None,
                 'tokens_used': result['tokens_used'],
                 'processing_time_ms': result['processing_time_ms'],
                 'error': result['error']

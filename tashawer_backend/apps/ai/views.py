@@ -136,7 +136,13 @@ class ScopeGenerateView(APIView, AIServiceMixin):
             return Response({
                 'success': True,
                 'data': {
+                    'title': result.get('title'),
+                    'description': result.get('description'),
                     'scope': result['scope'],
+                    'budget_min': result.get('budget_min'),
+                    'budget_max': result.get('budget_max'),
+                    'estimated_duration_days': result.get('estimated_duration_days'),
+                    'budget_reasoning': result.get('budget_reasoning'),
                     'tokens_used': result['tokens_used'],
                     'processing_time_ms': result['processing_time_ms'],
                 }

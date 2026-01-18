@@ -49,6 +49,18 @@ export interface AIGenerationResult {
   error?: string;
 }
 
+export interface ScopeGenerateResult {
+  title: string | null;
+  description: string | null;
+  scope: string;
+  budget_min: number | null;
+  budget_max: number | null;
+  estimated_duration_days: number | null;
+  budget_reasoning: string | null;
+  tokens_used: number;
+  processing_time_ms: number;
+}
+
 export interface UsageStats {
   limits: {
     daily_limit: number;
@@ -76,8 +88,8 @@ export interface UsageStats {
 /**
  * Generate project scope from description
  */
-export async function generateScope(data: ScopeGenerateRequest): Promise<{ scope: string; tokens_used: number; processing_time_ms: number }> {
-  const response = await api.post<{ success: boolean; data: { scope: string; tokens_used: number; processing_time_ms: number } }>(
+export async function generateScope(data: ScopeGenerateRequest): Promise<ScopeGenerateResult> {
+  const response = await api.post<{ success: boolean; data: ScopeGenerateResult }>(
     '/ai/scope/generate/',
     data
   );

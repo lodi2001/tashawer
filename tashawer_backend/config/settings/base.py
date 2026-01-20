@@ -229,6 +229,10 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@tashawer.sa')
 
+# TurboSMTP Settings (for custom email backend)
+TURBOSMTP_CONSUMER_KEY = config('TURBOSMTP_CONSUMER_KEY', default='')
+TURBOSMTP_CONSUMER_SECRET = config('TURBOSMTP_CONSUMER_SECRET', default='')
+
 
 # Celery Settings
 CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/0')
